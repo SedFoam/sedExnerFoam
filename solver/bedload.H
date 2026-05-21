@@ -207,8 +207,8 @@ else if (saturationType == "explicit")
         const faPatchField<Vector<scalar>>& QbBound =
             qb.boundaryField()[patchi];
 
-        if (bed.aMesh().boundary()[patchi].type() != "empty") 
-	{
+        if (bed.aMesh().boundary()[patchi].type() != "empty")
+        {
             // faMesh edge adressing
             label edgei = bed.aMesh().boundary()[patchi].start();
             forAll(bed.aMesh().boundary()[patchi], patchEdgei)
