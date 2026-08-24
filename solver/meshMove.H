@@ -35,7 +35,6 @@ for (const label patchID : bed.bedPatchesID())
         pointDisplacement.boundaryFieldRef()[patchID].patchInternalField();
 }
 
-
 scalarField& dHpoints = dHpointsPtr.ref();
 dHpoints = Zero;
 
@@ -52,13 +51,15 @@ for (const label i : fixedPointsLabels)
 
 dispVals -= eg * dHpoints;
 
+
 // interpolate displacement on points, vertical orientation
 //dispVals -= patchInterp.faceToPointInterpolate(dH) * eg;
 
 for (const label patchID : bed.bedPatchesID())
 {
-    Info << "mesh vertices motion, max:" << max(mag(dispVals));
-    Info << " m , min:" << min(mag(dispVals));
-    Info << " m , mean:" << average(mag(dispVals)) << " m" << endl;
+    Info << "mesh vertices motion, max:" << gMax(dispVals & -eg);
+    Info << " m , min:" << gMin(dispVals & -eg);
+    Info << " m , mean:" << gAverage(-dispVals & eg) << " m" << endl;
     pointDisplacement.boundaryFieldRef()[patchID] == dispVals;
+    pointDisplacement.correctBoundaryConditions();
 }

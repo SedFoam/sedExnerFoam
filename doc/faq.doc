@@ -1,0 +1,36 @@
+/**
+ * \file        faq.doc
+ * \author      Matthias Renaud, Cyrille Bonamy and Julien Chauchat
+ * \date        February 13, 2026
+ * \brief       Answers to FAQ (doc)
+ */
+/*! \page faq Frequently Asked Questions
+@brief Answers to FAQ
+
+\tableofcontents
+
+Here is a list of Frequently Asked Questions about sedExnerFoam:
+
+\section sedexnerfoam_app Which non-standard applications does sedExnerFoam consist?
+The sedExnerFoam solver is specifically developed to address a range of non-standard applications in the field of sediment transport and morphodynamics. It excels in simulating complex phenomena such as the migration of dunes under steady flow conditions, which is particularly challenging for traditional models. The solver also handles highly non-uniform flow regions, like those found near obstacles, by employing adaptive meshing techniques to maintain accurate hydrodynamics. Using the Arbitrary Lagrangian Eulerian (ALE) method, sedExnerFoam dynamically tracks the bed interface over time, allowing the sediment bed to act as a moving boundary. Additionally, it provides a robust 3D Exner-based framework for detailed sediment transport and morphological evolution, making it highly suitable for engineering applications that demand precise and dynamic simulations.
+
+\section parallel Are sedExnerFoam applications parallel?
+
+sedExnerFoam applications are parallel, thanks to the inherent parallel computing capabilities of the OpenFOAM framework. This allows users to distribute computational workloads across multiple cores, significantly improving efficiency and reducing simulation time for large or complex cases.
+However, there is currently a limitation: the moving boundary representing the sediment bed must remain within the same subdomain or core during parallel computations. This constraint means that while the solver benefits from parallel processing for most of the domain, the dynamic bed interface is not fully decomposed across multiple processors. This aspect is important to consider when setting up simulations involving significant bed movement or deformation.
+
+\section industry Is there any example that sedExnerFoam was applied onto industry-related engineering problems?
+
+sedExnerFoam was developed through a collaboration between academic institutions (University of Grenoble Alpes, CNRS) and the engineering firm ARTELIA Group, aiming to provide an open-source tool for sediment transport and morphodynamics studies—especially for hydraulic structures.
+Its numerical approach, validated by academic benchmarks, addresses engineering-relevant challenges such as scour around bridge piers and dune migration, offering detailed resolution of flow-sediment interactions
+
+\section limitations What are the limitations of sedExnerFoam; what remains unresolved?
+
+sedExnerFoam has key limitations: the moving sediment bed must stay within a single subdomain in parallel computations, empirical closures for bedload and erosion introduce uncertainties, and near-bed processes are mesh-sensitive.
+The Arbitrary Lagrangian-Eulerian (ALE) method, while effective for dynamic bed tracking, can struggle with extreme bed deformation or shock-like slope changes, potentially causing numerical instability.
+
+\section maintain_duration Roughly, how long do you or your colleagues plan to maintain sedFoam?
+
+Matthias Renaud, Cyrille Bonamy, Julien Chauchat, Olivier Bertrand and other people involved in the project do not plan to stop the maintenance of the software. We are three people with a permanent position, and so there is no problem for the next few years.
+
+*/

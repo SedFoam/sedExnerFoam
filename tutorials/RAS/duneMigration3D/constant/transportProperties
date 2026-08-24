@@ -1,0 +1,35 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      transportProperties;
+}
+
+// * * * * * * * * * * * * sediment properties * * * * * * * * * * * * //
+
+rhoS    [1 -3 0 0 0 0 0] 2500; // sediment density
+
+dS      [0 1 0 0 0 0 0] 0.4e-3; // sediment diameter
+
+CsMax    [0 0 0 0 0 0 0] 0.63; // max volumic sediment concentration
+
+reposeAngle      28;
+
+// ************************************************************************* //
+
+transportModel  Newtonian;
+
+nu      nu [ 0 2 -1 0 0 0 0 ] 1e-6;
+
+Sc      1; // Schmidt number
+
+// ************************************************************************* //

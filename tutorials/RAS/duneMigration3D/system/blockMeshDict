@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale 1;
+
+// channel dimensions
+Hz             0.09;
+Lx             0.8;
+dy             0.006;
+
+// dicretization
+nx             1100;
+ny             10;
+nz             80;
+gz             ((1 1 10)(1 1 0.1));
+
+
+xin            #eval{ -0.5 * $Lx };
+xout           #eval{ 0.5 * $Lx };
+
+vertices        
+(
+    ($xin 0 0)  // 0
+    ($xout 0 0)  // 1
+    ($xout $dy 0)  // 2
+    ($xin $dy 0)  // 3
+    ($xin 0 $Hz)  // 4
+    ($xout 0 $Hz)  // 5
+    ($xout $dy $Hz)  // 6
+    ($xin $dy $Hz)  // 7
+);
+
+blocks
+(
+    // lower blocks
+    hex (0 1 2 3 4 5 6 7) ($nx $ny $nz) simpleGrading (1 1 $gz)
+);
+
+edges
+(
+);
+
+boundary
+(
+    inlet
+    {
+        type   patch;
+        faces
+            (
+                (0 4 7 3)
+            );
+    }
+    outlet
+    {
+        type   patch;
+        faces
+            (
+                (1 2 6 5)
+            );
+    }
+    top
+    {
+        type   wall;
+        faces
+            (
+                (4 5 6 7)
+            );
+    }
+    bed
+    {
+        type   wall;
+        faces
+            (
+                (3 2 1 0)
+            );
+    }
+    sides
+    {
+        type symmetry;
+        faces
+            (
+                (0 1 5 4)
+                (7 6 2 3)
+            );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

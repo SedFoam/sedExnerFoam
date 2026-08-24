@@ -43,43 +43,124 @@ const labelList& owner = meshProj.edgeOwner();
 // face neighbour list
 const labelList& neighbour = meshProj.edgeNeighbour();
 
-// compute bedload flux on through internal edges
-for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
+if (qbScheme == "centered")
 {
-    // distance between edgei center and owner face center
-    scalar distOwner =
-        Foam::mag(xFacesProj[owner[edgei]] - xEdgesProj[edgei]);
+    // compute bedload flux on through internal edges
+    for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
+    {
+        // distance between edgei center and owner face center
+        scalar distOwner =
+            Foam::mag(xFacesProj[owner[edgei]] - xEdgesProj[edgei]);
         // distance between edgei center and neighbour center
-    scalar distNeighbour =
-        Foam::mag(xFacesProj[neighbour[edgei]] - xEdgesProj[edgei]);
-    // linear interpolate qb on edge i
-    vector qbEdgei =
-        (
-            distNeighbour * qbProj[owner[edgei]]
-            + distOwner * qbProj[neighbour[edgei]]
-        )
-        * (1 / (distOwner + distNeighbour));
+        scalar distNeighbour =
+            Foam::mag(xFacesProj[neighbour[edgei]] - xEdgesProj[edgei]);
+        // linear interpolate qb on edge i
+        vector qbEdgei =
+            (
+                distNeighbour * qbProj[owner[edgei]]
+                + distOwner * qbProj[neighbour[edgei]]
+            )
+            * (1 / (distOwner + distNeighbour));
 
-    // linear interpolation for avalanche bedload
-    vector qavEdgei =
-        (
-            distNeighbour * qavProj[owner[edgei]]
-            + distOwner * qavProj[neighbour[edgei]]
-        )
-        * (1 / (distOwner + distNeighbour));
-    /*if ((qavEdgei & LeProj[edgei]) > 0)
-    {
-        qavEdgei = qavProj[owner[edgei]];
+        //
+        vector qavEdgei = qavProj[owner[edgei]];
+        if (qavScheme == "centered")
+        {
+            // linear interpolation for avalanche bedload
+            qavEdgei =
+                (
+                    distNeighbour * qavProj[owner[edgei]]
+                    + distOwner * qavProj[neighbour[edgei]]
+                )
+                * (1 / (distOwner + distNeighbour));
+        }
+        else if (qavScheme == "upwind")
+        {
+            // upwind interpolation for avalanche bedload
+            if ((qavEdgei & LeProj[edgei]) >= scalar(0.0))
+            {
+                qavEdgei = qavProj[owner[edgei]];
+            }
+            else
+            {
+                qavEdgei = qavProj[neighbour[edgei]];
+            }
+        }
+        else
+        {
+            FatalError << qavScheme
+                << " is not a valid entry for qavScheme"
+                << endl;
+            Info << abort(FatalError) << endl;
+        }
+        phiqbProj[edgei] += (qbEdgei+qavEdgei) & LeProj[edgei];
     }
-    else
+}
+else if (qbScheme == "upwind")
+{
+    // compute bedload flux on through internal edges
+    for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
     {
-        qavEdgei = qavProj[neighbour[edgei]];
-        }*/
-
-    phiqbProj[edgei] += (qbEdgei+qavEdgei) & LeProj[edgei];
+        vector qbEdgei = qbProj[owner[edgei]];
+        // upwind interpolation for qb
+        if ((qbEdgei & LeProj[edgei]) >= scalar(0.0))
+        {
+            qbEdgei = qbProj[owner[edgei]];
+        }
+        else
+        {
+            qbEdgei = qbProj[neighbour[edgei]];
+        }
+        // Avalanche flux
+        vector qavEdgei = qavProj[owner[edgei]];
+        if (qavScheme == "centered")
+        {
+            // distance between edgei center and owner face center
+            scalar distOwner =
+                Foam::mag(xFacesProj[owner[edgei]] - xEdgesProj[edgei]);
+            // distance between edgei center and neighbour center
+            scalar distNeighbour =
+                Foam::mag(xFacesProj[neighbour[edgei]] - xEdgesProj[edgei]);
+            // linear interpolation for avalanche bedload
+            qavEdgei =
+                (
+                    distNeighbour * qavProj[owner[edgei]]
+                    + distOwner * qavProj[neighbour[edgei]]
+                )
+                * (1 / (distOwner + distNeighbour));
+        }
+        else if (qavScheme == "upwind")
+        {
+            // upwind interpolation for avalanche bedload
+            if ((qavEdgei & LeProj[edgei]) >= scalar(0.0))
+            {
+                qavEdgei = qavProj[owner[edgei]];
+            }
+            else
+            {
+                qavEdgei = qavProj[neighbour[edgei]];
+            }
+        }
+        else
+        {
+            FatalError << qavScheme
+                << " is not a valid entry for qavScheme"
+                << endl;
+            Info << abort(FatalError) << endl;
+        }
+        phiqbProj[edgei] += (qbEdgei+qavEdgei) & LeProj[edgei];
+    }
+}
+else
+{
+    FatalError << qbScheme
+        << " is not a valid entry for qbScheme"
+        << endl;
+    Info << abort(FatalError) << endl;
 }
 
-// compute bedload flux on through internal edges
+// /* test JC
+// compute bedload flux on through boundary edges
 forAll(aMesh.boundary(), patchi)
 {
     const faPatchField<Vector<double>>& QbBound =
@@ -107,6 +188,7 @@ forAll(aMesh.boundary(), patchi)
         }
     }
 }
+//*/
 
 // cancel computed bedload flux where no more sediments are present
 if (bed.rigidBed())

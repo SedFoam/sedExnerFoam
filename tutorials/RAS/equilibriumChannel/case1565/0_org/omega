@@ -31,13 +31,13 @@ boundaryField
     }
     top
     {
-        type            omegaWallFunction;
-        value           $internalField;
+        type            fixedValue;
+	value           uniform 100;
     }
     bed
     {
-        kn              0.375e-3;
-        type            fuhrmanomegaWallFunction;
+        kn              0.6e-3;//0.375e-3;
+        type            wilcoxOmegaWallFunction;
         value           $internalField;
     }
     frontAndBackPlanes

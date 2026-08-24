@@ -74,47 +74,76 @@ else if (ABorder==1)
 
 if (filterExner)
 {
-    scalar dl = 0;
-    for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
-    {
-        scalar newdl = Foam::mag(
-            xFacesProj[neighbour[edgei]] - xFacesProj[owner[edgei]]);
-        if (newdl>dl)
-        {
-            dl = newdl;
-        }
-    }
-    
-    scalar Kex = Foam::pow(dl, 2) * 0.1;
-    label NfiltZb = 3;
 
-    for (label j=0; j<NfiltZb; j++)
+    if (meshProj.nInternalEdges() > 0)
     {
-        scalarField lapldH(bed.aMesh().nFaces());
+
+        scalar dl = Foam::VGREAT;
 
         for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
         {
-            vector Xon =
-                xFacesProj[neighbour[edgei]] - xFacesProj[owner[edgei]];
-            //scalar w = (ne & Xen) / (ne & Xon);
-            scalar graddHe =
-                (
-                    (
-                        dH[neighbour[edgei]]
-                        - dH[owner[edgei]]
-                    ) * (Xon & LeProj[edgei])
-                ) / Foam::pow(Foam::mag(Xon), 2);
+            scalar newdl = Foam::mag(
+                xFacesProj[neighbour[edgei]] - xFacesProj[owner[edgei]]);
 
-            lapldH[owner[edgei]] =
-                (Kex / SfProj[owner[edgei]]) * graddHe;
-            lapldH[neighbour[edgei]] =
-                -(Kex / SfProj[neighbour[edgei]]) * graddHe;
+            if (newdl < dl)
+            {
+                dl = newdl;
+            }
         }
-        dH.primitiveFieldRef() += lapldH;
+
+        scalar Kex = Foam::sqr(dl) * alphaExn;
+
+        if (filterExnerType == "dZDiffusive")
+        {
+
+            dH.primitiveFieldRef() =
+            filterField(
+                NExn,
+                Kex,
+                dH.primitiveFieldRef(),
+                meshProj,
+                SfProj,
+                xFacesProj,
+                LeProj,
+                owner,
+                neighbour);
+        }
+        else if (filterExnerType == "JohnsonZyserman")
+        {
+
+            scalarField zB(aMesh.areaCentres().component(vector::Z));
+            zB += dH.primitiveFieldRef();
+
+            scalarField zBsm = filterField(
+                1,
+                Kex,
+                zB,
+                meshProj,
+                SfProj,
+                xFacesProj,
+                LeProj,
+                owner,
+                neighbour);
+
+            scalarField dz = zB - zBsm;
+
+            dH.primitiveFieldRef() +=
+            filterField(
+                NExn,
+                Kex,
+                dz,
+                meshProj,
+                SfProj,
+                xFacesProj,
+                LeProj,
+                owner,
+                neighbour) - dz;
+        }
     }
 }
 
 if (bed.bedMotion())
 {
     #include "meshMove.H"
+    #include "checkCellInversion.H"
 }

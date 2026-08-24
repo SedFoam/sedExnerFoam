@@ -1,0 +1,85 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         Euler backward;
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+// UEqn
+    div(phi,U)       Gauss linearUpwind phi;
+// CEqn
+    div(phip,Cs)       Gauss upwind phip;
+// pEqn
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+// k and EpsilonEqn
+    div(phi,k)       Gauss limitedLinear 1;
+    div(phi,epsilon) Gauss limitedLinear 1;
+    div(phi,omega)   Gauss limitedLinear 1;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear orthogonal;
+    laplacian(diffusivity,cellDisplacement) Gauss linear corrected;
+    /*// UEqn
+    laplacian(nuEff,U) Gauss linear;
+// CEqn
+    laplacian(epsEff,Cs) Gauss linear;
+// pEqn
+    laplacian((1|A(U)),p) Gauss linear;
+// k and EpsilonEqn 
+    laplacian(DkEff,k) Gauss linear;
+    laplacian(DkEff,beta) Gauss linear;
+    laplacian(DepsilonEff,epsilon) Gauss linear;
+    laplacian(DepsilonEff,beta) Gauss linear;
+        laplacian(DomegaEff,omega) Gauss linear;*/
+}
+
+
+interpolationSchemes
+{
+    default  linear;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
+fluxRequired
+{
+    default         no;
+    p               ;
+    Cs              ;
+}
+
+wallDist
+{
+    method           meshWave;
+}
+
+
+// ************************************************************************* //

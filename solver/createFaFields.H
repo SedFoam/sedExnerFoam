@@ -69,22 +69,50 @@ bool readCritShields = false;
 bool onEdgeAvalanche = false;
 
 // saturated length and time
-word saturationType("none");  // implicit1D or explicit
+word saturationType("none");  // implicit1D or explicit or semiImplicit
 dimensionedScalar* Tsat = nullptr;  // pointer to saturation time
 dimensionedScalar* Lsat = nullptr;  // pointer to saturation length
+
 if (bedloadProperties.found("saturation"))
 {
     const dictionary& satDict = bedloadProperties.subDict("saturation");
     saturationType = satDict.lookupOrDefault<word>("type", "explicit");
-    Info << "saturation on, " << saturationType << endl;
-    Tsat = new dimensionedScalar(
+    
+    if (saturationType != "none")
+    {
+        Info << "saturation on: " << saturationType << endl;
+
+        Tsat = new dimensionedScalar(
         dimensionSet(0, 0, 1, 0, 0, 0, 0),
         readScalar(satDict.lookup("Tsat")));
-    Info << "saturation time, Tsat = " << Tsat->value() << " s" << endl;
-    Lsat = new dimensionedScalar(
+        Info << "saturation time, Tsat = " << Tsat->value() << " s" << endl;
+
+        Lsat = new dimensionedScalar(
         dimensionSet(0, 1, 0, 0, 0, 0, 0),
         readScalar(satDict.lookup("Lsat")));
-    Info << "saturation length, Lsat = " << Lsat->value() << " s" << endl;
+        Info << "saturation length, Lsat = " << Lsat->value() << " m" << endl;
+    }
+    else
+    {
+        Info << "no saturation length or time used" << endl;
+    }
+}
+
+// qbScheme choice
+word qbScheme("upwind");  // "centered" or "upwind"
+word qavScheme("centered");  // "centered" or "upwind"
+
+if (bedloadProperties.found("exnerAdvection"))
+{
+    const dictionary& exnerAdvectionDict =
+                    bedloadProperties.subDict("exnerAdvection");
+    qbScheme =
+        exnerAdvectionDict.lookupOrDefault<word>("qbScheme", "upwind");
+    qavScheme =
+     exnerAdvectionDict.lookupOrDefault<word>("qavScheme", "centered");
+    Info << "qb scheme         : " << qbScheme << endl;
+    Info << "qav scheme        : " << qavScheme << endl;
+    //Info << "saturation scheme : " << satScheme << endl;
 }
 
 scalar betaRepDeg =
@@ -126,48 +154,122 @@ autoPtr<labelList> fixedPatchPointLabelsPtr;
 label ABorder = 0;
 
 // filter or not different bed variables, on off in bedloadProperties
-bool filterShields = false;
 bool filterExner = false;
 
-// for exner equation, filterering bed elevation increment
-//scalar alphaExn = 0;
-//label NExn = 0;
+scalar alphaExn = 0.1;  // filter coefficient for bed elevation increment
+label NExn = 3;  // number of filtering iterations for bed elevation increment
+
+word filterExnerType("none");
+
+bool filterShields = false;
+
+scalar alphaShields = 0.1;  // filter coefficient for Shields
+label NShields = 3;  // number of filtering iterations for Shields
+
+word filterShieldsSwitch("off");
 
 if (bed.exist())
 {
-    word switchFilterShields =
-        bedloadProperties.lookupOrDefault<word>("filterShields", "off");
-    if (switchFilterShields == "on")
+
+    if (bedloadProperties.found("filterExner"))
     {
-        filterShields = true;
-    }
-    else if (switchFilterShields != "off")
+        const dictionary& filterExnerDict =
+            bedloadProperties.subDict("filterExner");
+
+        filterExnerType =
+            filterExnerDict.lookupOrDefault<word>("type", "dZDiffusive");
+
+        if (filterExnerType != "none")
+        {
+
+            filterExner = true;
+
+            if (filterExnerType == "dZDiffusive")
+
+            {
+
+                alphaExn =
+                    filterExnerDict.lookupOrDefault<scalar>("alpha", 0.1);
+                NExn =
+                    filterExnerDict.lookupOrDefault<label>("Nfilt", 3);
+
+                Info << "filterExner type:"
+                     << " bed Increment Diffusion with : alpha = "
+                     << alphaExn << ", Nfilt = "
+                     << NExn << endl;
+
+            }
+            else if (filterExnerType == "JohnsonZyserman")
+            {
+
+                alphaExn =
+                    filterExnerDict.lookupOrDefault<scalar>("alpha", 0.1);
+                NExn =
+                    filterExnerDict.lookupOrDefault<label>("Nfilt", 3);
+
+                Info << "filterExner type:"
+                     << " Johnson and Zyserman with : alpha = "
+                     << alphaExn << ", Nfilt = " << NExn << endl;
+            } else
+            {
+                FatalError << "in bedloadProperties/filterExner,"
+                    << "wrong keyword for entry type "
+                    << filterExnerType
+                    << "\nvalid options are: none, dZDiffusive JohnsonZyserman"
+                    << endl;
+                Info << abort(FatalError) << endl;
+            }
+        }
+        else
+        {
+            Info << "no filtering of bed elevation increment" << endl;
+
+        }
+
+    }else
     {
-        FatalError << "in bedloadProperties,"
-            << "wrong keyword for entry filterShields "
-            << switchFilterShields
-            << "\nvalid options are: on off" << endl;
-            Info << abort(FatalError) << endl;
+        Info << "no filtering of bed elevation increment" << endl;
+
     }
-    
-    word switchFilterExner =
-        bedloadProperties.lookupOrDefault<word>("filterExner", "off");
-    if (switchFilterShields == "on")
+
+    if (bedloadProperties.found("filterShields"))
     {
-        filterExner = true;
-        //alphaExn = bedloadProperties.lookupOrDefault<scalar>(
-        //    "alphaFiltExner", 0.1);
-        //NExn = bedloadProperties.lookupOrDefault<label>(
-        //    "NfiltExner", 1);
+
+        const dictionary& filterShieldsDict =
+            bedloadProperties.subDict("filterShields");
+        filterShieldsSwitch =
+            filterShieldsDict.lookupOrDefault<word>("switch", "off");
+
+        if (filterShieldsSwitch == "on")
+        {
+
+            filterShields = true;
+            alphaShields =
+                filterShieldsDict.lookupOrDefault<scalar>("alpha", 0.1);
+            NShields =
+                filterShieldsDict.lookupOrDefault<label>("Nfilt", 3);
+
+            Info << "filterShields on with : alpha = "
+                 << alphaShields << ", Nfilt = " << NShields << endl;
+
+        }
+        else if (filterShieldsSwitch != "off")
+        {
+            FatalError << "in bedloadProperties,"
+                << "wrong keyword for entry filterShields/switch "
+                << filterShieldsSwitch
+                << "\nvalid options are: on off" << endl;
+                Info << abort(FatalError) << endl;
+        }
+        else
+        {
+
+            Info << "filter Shields: off" << endl;
+
+        }
+
     }
-    else if (switchFilterExner != "off")
-    {
-        FatalError << "in bedloadProperties,"
-            << "wrong keyword for entry filterExner "
-            << switchFilterShields
-            << "\nvalid options are: on off" << endl;
-            Info << abort(FatalError) << endl;
-    }
+
 }
 
 // create fa fields if morphology on

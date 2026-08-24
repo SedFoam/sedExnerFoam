@@ -1,0 +1,5 @@
+Before you run the 2D simulation, you have to run the case 1Dflow that will be used as the inlet boundary condition for the 2D case.
+- cd 1Dflow
+- ./Allrun
+- cd ..
+- ./Allrun

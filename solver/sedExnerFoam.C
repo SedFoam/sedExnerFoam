@@ -32,32 +32,32 @@ Group
 Description
     Scalar transport and incompressible turbulent flow solver.
 
-    \heading Solver details
-    The equation is given by:
-
-    \f[
-        \ddt{T} + \div \left(\vec{U} T\right) - \div \left(D_T \grad T \right)
-        = S_{T}
-    \f]
-
-    Where:
-    \vartable
-        Cs         | Volumic fraction
-        \vec{U}    | Velocity
-        \vec{R}    | Stress tensor
-        p          | Pressure
-        \vec{S}_U  | Momentum source
-    \endvartable
-
-    \heading Required fields
-    \plaintable
-        Cs      | Passive scalar
-        U       | Velocity [m/s]
-        p       | Kinematic pressure, p/rho [m2/s2]
-        \<turbulence fields\> | As required by user selection
-    \endplaintable
-
 \*---------------------------------------------------------------------------*/
+//    \heading Solver details
+//    The equation is given by:
+//
+//    \f[
+//        \ddt{T} + \div \left(\vec{U} T\right) - \div \left(D_T \grad T \right)
+//        = S_{T}
+//    \f]
+
+//    Where:
+//    \vartable
+//        Cs         | Volumic fraction
+//        \vec{U}    | Velocity
+//        \vec{R}    | Stress tensor
+//        p          | Pressure
+//        \vec{S}_U  | Momentum source
+//    \endvartable
+
+//    \heading Required fields
+//    \plaintable
+//        Cs      | Passive scalar
+//        U       | Velocity [m/s]
+//        p       | Kinematic pressure, p/rho [m2/s2]
+//        \<turbulence fields\> | As required by user selection
+//    \endplaintable
+
 
 #include "fvCFD.H"
 #include "faCFD.H"
@@ -85,6 +85,7 @@ Description
 #include "bedloadModel.H"
 #include "sedimentBed.H"
 #include "projectedFaMesh.H"
+#include "filter.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

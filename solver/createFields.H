@@ -100,8 +100,6 @@ Info << "dimensionless diameter, Dstar = " << Dstar.value() << endl;
 dimensionedScalar CsMax("CsMax", dimless, transportProperties);
 Info << "maximum possible sediment volume fraction: "
     << CsMax.value() << endl;
-// Nikuradse equivalent roughness height, skin friction
-dimensionedScalar ks =  2.5 * dS;
 // Schmidt number, default value 1
 dimensionedScalar Sc("Sc", dimless, 1);
 if (transportProperties.found("Sc"))
@@ -165,6 +163,7 @@ if (CsDiffusivity != "turbulent" and CsDiffusivity != "effective")
 bool isWallDiff = false;
 dimensionedScalar epsWall0(dimViscosity, 0);
 dimensionedScalar betaWall(dimless, 0);
+dimensionedScalar gammaWall(dimless, 2.5);
 if (suspensionProperties.found("wallDiffusivity"))
 {
     isWallDiff = true;
@@ -174,17 +173,22 @@ if (suspensionProperties.found("wallDiffusivity"))
         );
     epsWall0.value() = wallDiffDict.lookupOrDefault<scalar>("alpha", 0);
     betaWall.value() = wallDiffDict.lookupOrDefault<scalar>("beta", 5);
+    gammaWall.value() = wallDiffDict.lookupOrDefault<scalar>("gamma", 2.5);
 }
 if (isWallDiff)
 {
     Info << "wall diffusivity (saltation) enabled, "
         << "alpha = " << epsWall0.value()
-        << ", beta = " << betaWall.value() << endl;
+        << ", beta = " << betaWall.value()
+        << ", gamma = " << gammaWall.value()
+        << endl;
 }
 else
 {
     Info << "wall diffusivity off" << endl;
 }
+// Nikuradse equivalent roughness height, skin friction
+dimensionedScalar ks =  gammaWall * dS;
 
 // maximum reference concentration for erosion condition
 // sediment vol fraction, default is 0.3 , user modifiable

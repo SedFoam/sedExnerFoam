@@ -119,7 +119,36 @@ if (bed.exist())
             Ep[facei] = (cbRefZ1 / Vcell)
                 * ((wsi & nFace) * Sface - bedPhiFace);
         }
-        
+        // version proposée par Matthias mais non testée
+        if (bed.rigidBed())
+        {
+            areaScalarField& HsedBed = HsedBedPtr.ref();
+
+            // current time step
+            scalar deltaT = runTime.time().deltaT().value();
+
+            forAll(bedPatch, facei)
+            {
+                // label de la cellule voisine
+                label idNCell = bedPatch.faceCells()[facei];
+                const scalar Sface = aMesh.S()[facei];
+                const scalar Vcell = mesh.V()[idNCell];
+                
+                if (HsedBed[facei]<=0)
+                {
+                    Ep[facei] = 0;
+                }
+                else
+                {
+                    Ep[facei] = Foam::min
+                        (
+                            Ep[facei],
+                            (HsedBed[facei] * Sface) / (deltaT * Vcell)
+                        );
+                }
+            }
+        }
+        /* version code Matthias original
         if (bed.rigidBed())
         {
             areaScalarField& HsedBed = HsedBedPtr.ref();
@@ -136,6 +165,7 @@ if (bed.exist())
                     );
             }
         }
+         */
         forAll(bedPatch, facei)
         {
             // label of neighbour cell
@@ -198,6 +228,9 @@ if (switchMULES=="on")
     Cs.correctBoundaryConditions();
 
     fvOptions.correct(Cs);
+
+    // Add Boussinesq term
+    // moved to Seqn rhok = 1 + Cs * (rhoS - rhoF) / rhoF ;
 }
 
 // CLASSICAL FORMULATION FOR SUSPENTION TRANSPORT

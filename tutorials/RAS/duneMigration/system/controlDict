@@ -19,7 +19,7 @@ application     sedExnerFoam;
 
 startFrom       latestTime;
 
-startTime       0;
+startTime       10;
 
 stopAt          endTime;
 
@@ -33,7 +33,7 @@ writeInterval   1;
 
 purgeWrite      0;
 
-writeFormat     binary;
+writeFormat     ascii; //ascii;//binary;
 
 writePrecision  6;
 

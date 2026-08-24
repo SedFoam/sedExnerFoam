@@ -139,4 +139,4 @@ plt.show()
 
 if save:
     imname = "movingBed1Dsedim_tuto.png"
-    fig.savefig("./" + imname, dpi=300, format="png", transparent=True)
+    fig.savefig("./Figures/" + imname, dpi=300, format="png", transparent=True)
