@@ -36,9 +36,6 @@ bedloadModel
 
     avalanche          on;
     Qav                3e-4;
-    NfiltBeta          0;
-    alphaFiltBeta      0.2;
-    onEdge             off;
 }
 
 criticalShieldsModel
@@ -48,8 +45,15 @@ criticalShieldsModel
     slopeCorrection    on;
 }
 
+exnerAdvection
+{
+   qbScheme           "upwind";
+   qavScheme          "centered"; 
+}
+
 saturation
 {
+    type               "explicit"; //"none", "explicit", "implicit1D";
     Tsat               0.01;
     Lsat               0.005;
 }

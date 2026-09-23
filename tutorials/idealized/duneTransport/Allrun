@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Create the vol and fa meshes
+blockMesh
+makeFaMesh
+
+# create the initial dune geometry
+python3 createGeometry.py
+
+# create the initial time folder
+cp -r 0_org 0
+
+# Run sedExnerFoam
+exnerFoam > log

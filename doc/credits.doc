@@ -1,0 +1,33 @@
+/**
+ * \file        credits.doc
+ * \author      Cyrille Bonamy, Matthias Renaud, Olivier Bertrand and Julien Chauchat
+ * \date        February 05, 2026
+ * \brief       People and organizations that contributed (doc)
+ *
+ * \details     Listing only people with code contributions or other significant work and the organisations with financial
+ *              contributions 
+ */
+/** @page credits-contributors Contributors
+@brief People and organizations that contributed to sedExnerFoam
+
+Listing only people with code contributions or other significant work and the organisations with financial contributions, because
+otherwise there's too many :) 
+Big thanks to everyone involved!
+
+Are the below lists missing your name or something's wrong?
+<a href="mailto:cyrille.bonamy@univ-grenoble-alpes.fr">Let us know!</a>
+
+@section Authors
+
+-   **Cyrille Bonamy** ([\@CyrilleBonamy](http://www.legi.grenoble-inp.fr/people/Cyrille.Bonamy)) --- contributor and main maintainer
+-   **Julien Chauchat** ([\@jchauchat](http://www.legi.grenoble-inp.fr/people/Julien.Chauchat)) --- contributor and Project Investigator
+-   **Olivier Bertrand** ((https://www.linkedin.com/in/olivier-bertrand-9493834/)) --- Project Investigator
+-   **Matthias Renaud** ([\@Renaud-Matthias](http://www.legi.grenoble-inp.fr/people/Matthias.Renaud)) --- core developer
+-   Developers involved in OpenFOAM, which is the foundation of the new solver sedExnerFoam
+
+@section Organisations
+-   **French National Research Agency (CNRS)**
+-   **National Research Institute for Agriculture, Food and Environment (INRAE)**
+-   **ARTELIA Group**
+
+*/

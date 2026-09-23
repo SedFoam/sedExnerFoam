@@ -1,0 +1,297 @@
+/**
+ * \file        tutorials_laminar.doc
+ * \author      Cyrille Bonamy and Julien Chauchat
+ * \date        June 03, 2021
+ * \brief       Tutorials laminar (doc)
+ */
+/*! \page tutorials_laminar Laminar flow tutorials
+
+In this chapter we shall describe in detail the process of setup, simulation and post-processing for sedExnerFoam test cases in the laminar flow regime.
+All the tutorial cases are in the *tutorials/laminar* directory. The text herein is highly inspired from the OpenFOAM user-guide for the cavity tutorial available at http://cfd.direct/openfoam/user-guide/cavity/ but is adapted to the specificity of sedExnerFoam.
+
+The test cases provided with sedExnerFoam are aimed to facilitate the learning as well as the development of new configurations. If you develop new feature do not hesitate to share your development with us so that we can incorporate them in the github repository and others will benefit from your work the way you benefited from the original sedExnerFoam version!
+
+\tableofcontents{xml:1}
+
+A number of one-dimensional test cases are provided with reference solutions, analytical, experimental or numerical, to validate sedExnerFoam implementation and developments. Most of these test cases are used in the contiunous integration procedure to verify new developments in sedExnerFoam.
+
+\section  Sedim_testcase 1DSedim: Pure sedimentation
+
+This tutorial will describe how to pre-process, run and post-process a case corresponding to a pure sedimentation problem in a one-dimensional configuration using the two-phase flow equations. The geometry is shown in Figure 1 in which bottom boundary is a wall and the top boundary is an open boundary.  Initially, the flow is at rest and will be solved on a uniform mesh using the sedExnerFoam solver for laminar, isothermal, incompressible flow. The numerical results are compared with experiments to validate the model in terms of settling curves, time evolution of concentration interface, and concentration profiles.
+
+
+\subsection preproc Pre-processing
+
+Like in OpenFOAM, cases are setup by editing case files using a text editor such as atome, vscode/vscodium, emacs, vi, gedit, nedit, etc. The I/O uses a dictionary format with keywords. A case involves data for mesh, fields, properties, control parameters, etc  that are stored in a set of files within a case directory rather than in a single case file. The case directory is given a suitably descriptive name. This tutorial consists of a set of cases located in the sedExnerFoam distribution under the folder *sedExnerFoamDirectory/turheolotorials/laminar/1DSedim*.
+
+\paragraph meshgen Mesh generation
+
+OpenFOAM always operates in a 3 dimensional Cartesian coordinate system and all geometries are generated in 3 dimensions. OpenFOAM solves the case in 3 dimensions by default but can be instructed to solve in 2 dimensions by specifying a ‘special’ empty boundary condition on boundaries normal to the (3rd) dimension for which no solution is required. In 2 dimensions, the directions x and y are always chosen even if the mesh is given in the x-z plane.
+
+The sedimentation domain consists of a rectangle of side length L = 0.006 m in the x–y plane and of height h=0.06 m in the vertical direction z. The side length is chosen to ensure a unity cell aspect ratio. A uniform mesh of 1 by 1 by 300 cells will be used. The block structure is shown in Figure 1.
+
+The mesh generator supplied with OpenFOAM, blockMesh, generates meshes from a description specified in an input dictionary, blockMeshDict located in the *constant/polyMesh* directory for a given case. The *blockMeshDict* entries for this case are as follows:
+
+\verbatim
+
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale 0.06;
+
+vertices
+(
+    (-0.005 0   0.005) //0
+    ( 0.005 0   0.005) //1
+    ( 0.005 1.  0.005) //2
+    (-0.005 1.  0.005) //3
+    (-0.005 0  -0.005) //4
+    ( 0.005 0  -0.005) //5
+    ( 0.005 1. -0.005) //6
+    (-0.005 1. -0.005) //7
+);
+
+blocks
+(
+    hex (0 1 5 4 3 2 6 7) (1 1 300) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    inlet
+    {
+     type   cyclic;
+     neighbourPatch outlet;
+     faces ((0 3 7 4));
+    }
+    outlet
+    {
+     type   cyclic;
+     neighbourPatch  inlet;
+     faces  ((1 5 6 2));
+    }
+    top
+    {
+     type wall;
+        faces ((7 6 2 3));
+    }
+    bottom
+    {
+     type wall;
+     faces ((0 4 5 1));
+    }
+    frontAndBackPlanes
+    {
+    type empty;
+    faces (
+           (0 1 2 3)
+           (4 7 6 5)
+          );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
+
+\endverbatim
+
+The file first contains header information in the form of a banner (lines 1-7), then file information contained in a FoamFile sub-dictionary, delimited by curly braces ({…}).
+
+The file specifies coordinates of the block vertices; then, it defines the blocks (here, only 1) from the vertex labels and the number of cells within it; and finally, it defines the boundary patches. The user is encouraged to consult the official documentation
+<a href="http://cfd.direct/openfoam/user-guide/blockMesh/#x25-1750005.3">here</a>
+to understand the meaning of the entries in the *blockMeshDict* file.
+
+
+The mesh is generated by running the command blockMesh. This is done simply by typing in the terminal:
+
+\verbatim
+blockMesh
+\endverbatim
+
+The running status of blockMesh is reported in the terminal window. Any mistakes in the *blockMeshDict* file are picked up by blockMesh and the resulting error message directs the user to the line in the file where the problem occurred. There should be no error messages at this stage.
+
+
+\paragraph BC_init Boundary and initial conditions
+
+Once the mesh generation is complete, the user can look at this initial fields set up for this case. The case is set up to start at time t = 0 s, so the initial field data is stored in a 0_org sub-directory of the 1DSedim directory. The 0_org sub-directory contains several files: Cs the concentration, U the velocity, p the pressure and Ws the settling velocity  whose initial values and boundary conditions must be set. Let us examine file U:
+
+\verbatim
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    inlet
+    {
+        type            cyclic;
+    }
+    outlet
+    {
+        type            cyclic;
+    }
+    top
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    bottom
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    frontAndBackPlanes
+    {
+        type            empty;
+    }
+}
+
+\endverbatim
+
+There are 3 principal entries in field data files:
+
+
+-dimensions:
+    specifies the dimensions of the field, here velocity, i.e. m s\f$^{-1}\f$ ;
+
+-internalField:
+    the internal field data which are set to be uniform;
+
+-boundaryField:
+    the boundary field data that includes boundary conditions and data for all the boundary patches.
+
+The solid volume fraction has 0 fixedValue boundary condition at the top boundary condition and zeroGradient at the bottom. The pressure has a slip boundary condition at the top boundary and a zeroGradient at the bottom boundary.
+
+\paragraph PhysProp Physical properties
+
+The physical properties for the case are stored in dictionaries whose names are given the suffix …Properties, located in the Dictionaries directory tree. For a sedExnerFoam case, there are 4 property files: transportProperties, bedloadProperties, suspensionProperties, turbulenceProperties
+
+In the transport property file, the physical properties of the solid and fluid phases are set, such as density, kinematic viscosity and particle diameter.
+
+\verbatim
+// * * * * * * * * * * * * sediment properties * * * * * * * * * * * * //
+
+rhoS    [1 -3 0 0 0 0 0] 1050; // sediment density
+
+dS      [0 1 0 0 0 0 0] 2.9e-4; // sediment diameter
+
+CsMax    [0 0 0 0 0 0 0] 0.6; // max volumic sediment concentration
+
+// ************************************************************************* //
+
+transportModel  Newtonian;
+
+nu      nu [ 0 2 -1 0 0 0 0 ] 2.105e-05;
+
+Sc      1; // Schmidt number
+
+\endverbatim
+
+The dictionary *bedloadProperties* allows to activate or not the moving bed model:
+
+\verbatim
+sedimentBed       off;
+\endverbatim
+
+In the present case (1DSedim), it is desactivated.
+
+The dictionary *suspensionProperties* contains the parameters of the suspension model.
+
+\verbatim
+
+suspension        on;
+
+MULESformulation  on;
+
+fallModel
+{
+	type   Stokes;
+}
+
+hindranceModel
+{
+	type   ZakiModified;
+	n      3.45;
+}
+
+\endverbatim
+
+\paragraph control_sedExnerFoam Control
+
+Input data related to the control of time and reading and writing of the solution data are read from the controlDict dictionary. The user should view this file as a case control file, it is located in the *system* directory.
+
+The start/stop times and the time step for the run must be set. In this tutorial we wish to start the run at time t = 0 which means that OpenFOAM needs to read field data from a directory named 0. Therefore we set the startFrom keyword to startTime and then specify the startTime keyword to be 0.
+
+As the simulation progresses we wish to write results at certain intervals of time that we can later view with a post-processing package. The writeControl keyword presents several options for setting the time at which the results are written; here we select the adjustableRunTime option which specifies that results are written every writeInterval seconds of simulated time, adjusting the time steps to coincide with the writeInterval if necessary and the time step is adjusted using deltaT value.
+
+OpenFOAM creates a new directory named after the current time, e.g. 20 s, on each occasion that it writes a set of data. For this case, the entries in the controlDict are shown below:
+
+\verbatim
+application     sedExnerFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1800;
+
+deltaT          1e-5;
+
+writeControl    adjustableRunTime;
+
+writeInterval   20;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable on;
+
+adjustTimeStep  off;
+
+maxCo           0.3;
+
+maxAlphaCo      0.3;
+
+maxDeltaT       2e-1;
+
+\endverbatim
+
+
+\paragraph Disc_solv Discretisation and linear-solver settings
+
+The numerical schemes and linear solvers are set in the *system/fvSchemes* and *system/fvSolution* files respectively.
+
+Concerning the numerical schemes, the time discretisation is an Euler implicit scheme, the divergence terms are of Gauss limitedLinear type (2nd order centered schemes with a Sweby limiter) and the laplacian scheme is Gauss linear corrected for all terms.
+
+In the *system/fvSolution* file, the user can specify the linear solver he/she wants to use for each equation and the tolerance for the resolution. The user can also control the number of corrector steps and non-orthogonal correctors (useless for cartesian grids) for the PIMPLE algorithm. In the present case, a single PIMPLE corrector is enough the residual of the pressure equation is shown to converge well.
+
+*/

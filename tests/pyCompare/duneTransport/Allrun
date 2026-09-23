@@ -4,6 +4,7 @@
 blockMesh
 
 # initial bathymetry
+cp ../../duneTransport/createDuneGeom.py .
 python createDuneGeom.py
 # finite area mesh
 makeFaMesh

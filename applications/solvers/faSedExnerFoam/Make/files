@@ -1,0 +1,3 @@
+faSedExnerFoam.C
+
+EXE = $(FOAM_MODULE_APPBIN)/faSedExnerFoam

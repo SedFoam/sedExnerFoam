@@ -1,0 +1,66 @@
+﻿/**
+ * \file        index.doc
+ * \author      Cyrille Bonamy and Julien Chauchat
+ * \date        April 25, 2022
+ * \brief       index (doc)
+ */
+/*! 
+\mainpage 
+<!--sedExnerFoam Manual-->
+@image html "sedexnerfoam_background.png" width=800px
+@image latex "sedexnerfoam_background.png"
+<h2>Introduction</h2>
+sedExnerFoam is an OpenFOAM solver in development aiming at the numerical study of various sediment transport and morphodynamics problems.
+
+This manual is written as the documentation of the open-source solver sedExnerFoam, it includes the installation procedure and a description of the model input/output files. 
+
+The sedExnerFoam solver should be referenced using the GMD paper :
+
+Renaud, M., Bertrand, O., Bonamy, C., and Chauchat, J. (2026) sedExnerFoam 2412: A 3D Exner-based sediment transport and morphodynamics model, Geosci. Model Dev., review in progress, https://doi.org/10.5194/egusphere-2025-2375.
+
+If you are using a sedExnerFoam version without modification, you should also refer to the Zenodo DOI of the version, current version is https://doi.org/10.5281/zenodo.15535485
+
+
+
+The documentation is divided into two parts, the first one is the user manual:
+<ul>
+<li>Section \ref install explains how to download, compile and install sedExnerFoam.
+<li>Section \ref howtodocker provides a survival guide on how to use SedExnerFoam docker (in progress).
+<li>Section \ref governingEq describes sedExnerFoam governing equations (in progress). 
+<li>Section \ref tutorials_laminar describes the laminar flow tutorials provided with sedExnerFoam sources including postprocessing using a python toolbox also provided with the source and the expected results.
+<li>Section \ref inputs describes the input parameters for sedExnerFoam.
+<li>Section \ref howtogit provides a survival guide on how to use git to use/develop sedExnerFoam.
+<li>Section \ref faq provides answers to typical Frequently Asked Questions about sedExnerFoam 
+</ul>
+
+
+The second part provides informations for developers.
+
+\n<h2>sedExnerFoam license</h2>
+
+Copyright &copy; 2025 by
+<a href="mailto:matthias.renaud@arteliagroup.com">Matthias Renaud</a>,
+<a href="mailto:cyrille.bonamy@univ-grenoble-alpes.fr">Cyrille Bonamy</a>,
+<a href="mailto:olivier.bertrand@arteliagroup.com">Olivier Bertrand</a>,
+<a href="mailto:julien.chauchat@univ-grenoble-alpes.fr">Julien Chauchat</a>,
+and <a href="credits-contributors.html">contributors.</a><p>
+
+Permission to use, copy, modify, and distribute this software and its
+documentation under the terms of the GNU General Public License is hereby 
+granted. No representations are made about the suitability of this software 
+for any purpose. It is provided "as is" without express or implied warranty.
+See the 
+<a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">
+GNU General Public License</a>
+for more details.
+<p>
+
+<h2>Acknowledgments</h2>
+This project is supported by many organisations.
+<a href="credits-contributors.html">Please find the list here.</a>
+
+\htmlonly
+Go to the <a href="install.html">next</a> section.
+\endhtmlonly
+
+*/

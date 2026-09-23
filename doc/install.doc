@@ -1,0 +1,62 @@
+/**
+ * \file        install.doc
+ * \author      Cyrille Bonamy, Matthias Renaud and Julien Chauchat
+ * \date        Feb. 05, 2026
+ * \brief       Installation (doc)
+ */
+/*! \page install Installation
+
+@brief How to install sedExnerFoam
+
+\tableofcontents
+
+\section install_src_unix Compiling from source with supported OpenFOAM (last ESI version)
+
+You need OpenFOAM to build the executable. sedExnerFoam versions released are named accordingly to OpenFOAM ESI versions. Currently the latest version is sedExnerFoam-2512.
+<ul>
+<li>First go to the <a href="https://www.openfoam.com/download">download</a> page of the software
+<li><a href="https://www.openfoam.com/download/installation.php">Install OpenFOAM</a>.
+</ul>
+
+To take full advantage of sedExnerFoam the following additional tools should be installed.
+
+<ul>
+<li><a href="https://openfoamwiki.net/index.php/Contrib/swak4Foam">swak4Foam</A> extension combines many fonctionalities and is needed for the tutorials
+<li>Python usually comes pre-installed in Linux. However, if not installed or if you need a specific version, you can install Python with the following command:
+
+        sudo apt install python3
+
+<li>the python package
+    <a href="https://github.com/fluiddyn/fluidfoam">fluidfoam</A>
+    is needed for postprocessing of the tutorials.
+</ul>
+
+Compilation is now done by performing the following steps:
+
+<ol>
+<li>Download the official sedExnerFoam package:
+
+        git clone --recurse-submodules http://github.com/sedfoam/sedExnerFoam
+
+<li>Compile the program by running Allwmake:
+
+        cd sedExnerFoam
+        source $FOAM_ETC/bashrc # load the openfoam environment
+        ./Allwmake
+
+    The program should compile without problems and the binary
+    <code>sedExnerFoam</code> and associated libraries
+    should be available in the $FOAM_USER_APPBIN and $FOAM_USER_LIBBIN directories.
+
+</ol>
+
+\section use_docker Don't install sedExnerFoam and use the latest sedExnerFoam docker
+
+For this : go <a href="howtodocker.html">Here</a>.
+
+\htmlonly
+Go to the <a href="howtodocker.html">next</a> section or return to the
+ <a href="index.html">index</a>.
+\endhtmlonly
+
+*/

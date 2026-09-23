@@ -1,0 +1,78 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+vectorCodedSource
+{
+    type            vectorCodedSource;
+    active          on; // true;
+    selectionMode   all;
+    redirectType    velocitySource;
+    fields          (U);
+    name            B;
+    codeOptions
+    #{
+        #include "fvCFD.H"
+        #include "fvc.H"
+    #};
+    codeAddSup
+    #{
+        vectorField& B = eqn.source();
+        const scalarField& V = mesh().V();
+        const vectorField& CellC = mesh().C(); 
+        const volVectorField& U_ = mesh().lookupObject<volVectorField>("U");
+        scalar W_ = 6.03e-3;  // flume width
+        scalar dy_= 6.03e-4;  // grid size (spanwise)
+        scalar Hz_ = 9e-02;  // flume height
+        scalar nu_ = 1e-06;  // water kinematic viscosity
+        scalar kn_ = 1e-06;  // lateral wall rugosity
+        scalar Dh_ = 2. * W_ / (1 + W_ / (2. * Hz_));  // hydraulic diameter
+        // Reynolds number based on Dh
+        const volScalarField& Re_ = Foam::mag(U_) * Dh_ / nu_;
+        
+        Info <<"min(Re) = "<< gMin(Re_)
+            << ", max(Re) = " << gMax(Re_) <<endl;
+        
+        scalar f_ = 0.2;
+        
+        forAll(CellC, i)
+        {
+            if (Re_[i] > 1e2)
+            {
+                // Swamee and Jain (1976)
+                f_ = 0.25e0 / Foam::pow(
+                    Foam::log10(
+                        (kn_/Dh_)/3.7 + 5.74/Foam::pow(Re_[i],0.9)
+                    ), 2);
+            }
+            else
+            {
+                f_ = 0.2;
+            }
+
+            B[i] = f_ * Foam::mag(U_[i]) * U_[i] / ( 4 * W_ ) * V[i];
+        }
+    #};
+    codeCorrect
+    #{
+    #};
+    codeConstrain
+    #{
+    #};
+}
+
+// ************************************************************************* //
+

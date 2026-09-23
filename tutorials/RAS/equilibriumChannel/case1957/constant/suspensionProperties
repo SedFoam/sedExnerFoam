@@ -33,10 +33,10 @@ hindranceModel
 
 wallDiffusivity
 {
-    alpha           5e-6;
+    alpha           1e-5;
 }
 
-CsbMax              0.15;
+CsbMax              0.3;
 
 
 // ************************************************************************* //

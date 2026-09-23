@@ -1,0 +1,129 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale 1;
+
+// channel dimensions
+LxExt          0.2;  // channel length, upstream and downstream part
+LxMid          0.1;  // channel center length
+Ly             0.04;  // channel width
+LzExt          0.1;  // channel height at extremities
+LzMid          0.06;  // channel height at center 
+
+// dicretization
+nxExt          40;
+nxMid          20;
+ny             10;
+nz             15;
+gz             ((1 1 2)(1 1 0.5));
+
+
+x0             0;
+x1             #eval{ $x0 + $LxExt };
+x2             #eval{ $x1 + $LxMid };
+x3             #eval{ $x2 + $LxExt };
+
+vertices        
+(
+    ($x0 0 0)  // 0
+    ($x1 0 0)  // 1
+    ($x1 $Ly 0)  // 2
+    ($x0 $Ly 0)  // 3
+    ($x0 0 $LzExt)  // 4
+    ($x1 0 $LzMid)  // 5
+    ($x1 $Ly $LzMid)  // 6
+    ($x0 $Ly $LzExt)  // 7
+
+    ($x2 0 0)  // 8
+    ($x2 $Ly 0)  // 9
+    ($x2 0 $LzMid)  // 10
+    ($x2 $Ly $LzMid)  // 11
+
+    ($x3 0 0)  // 12
+    ($x3 $Ly 0)  // 13
+    ($x3 0 $LzExt)  // 14
+    ($x3 $Ly $LzExt)  // 15
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($nxExt $ny $nz) simpleGrading (1 1 $gz)
+    hex (1 8 9 2 5 10 11 6) ($nxMid $ny $nz) simpleGrading (1 1 $gz)
+    hex (8 12 13 9 10 14 15 11) ($nxExt $ny $nz) simpleGrading (1 1 $gz)
+);
+
+edges
+(
+);
+
+boundary
+(
+    inlet
+    {
+        type   patch;
+        faces
+            (
+                (0 4 7 3)
+            );
+    }
+    outlet
+    {
+        type   patch;
+        faces
+            (
+                (12 13 15 14)
+            );
+    }
+    top
+    {
+        type   wall;
+        faces
+            (
+                (4 5 6 7)
+                (5 10 11 6)
+                (10 14 15 11)
+            );
+    }
+    bed
+    {
+        type   wall;
+        faces
+            (
+                (3 2 1 0)
+                (1 2 9 8)
+                (9 8 13 12)
+            );
+    }
+    sides
+    {
+        type wall;
+        faces
+            (
+                (0 1 5 4)
+                (7 6 2 3)
+                (1 8 10 5)
+                (9 2 6 11)
+                (8 12 14 10)
+                (9 11 15 13)
+            );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

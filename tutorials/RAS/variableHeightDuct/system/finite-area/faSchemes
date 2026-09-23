@@ -1,0 +1,45 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      faSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    ddt(deltaH)     Euler;
+}
+
+gradSchemes
+{
+}
+
+divSchemes
+{
+    div(qb)     Gauss upwind phiqb;
+    div(qav)    Gauss upwind phiqav;
+}
+
+laplacianSchemes
+{
+}
+
+interpolationSchemes
+{
+    default     linear;
+}
+
+lnGradSchemes
+{
+}
+
+// ************************************************************************* //

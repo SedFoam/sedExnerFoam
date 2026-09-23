@@ -10,7 +10,7 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      sedimentProperties;
+    object      suspensionProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * /
 
@@ -35,5 +35,7 @@ wallDiffusivity
 {
     alpha   5e-6;
 }
+
+CsbMax              0.3;
 
 // ************************************************************************* //

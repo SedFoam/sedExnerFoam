@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#OAR -n duneMigration3D
+#OAR -l /nodes=1/core=32,walltime=24:00:00
+
+. /etc/profile
+module load openfoam/2506plus
+
+# Lancement
+mpirun -np 32 sedExnerFoam -parallel 
