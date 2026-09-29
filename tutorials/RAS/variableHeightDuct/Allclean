@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Remove fvMesh
+foamCleanPolyMesh
+# Remove faMesh
+rm -r constant/faMesh
+
+# Remove time folders
+foamListTimes -rm -time 0: -withZero
+# remove log file
+rm log
+
+rm -r postProcessing
+rm -r dynamicCode

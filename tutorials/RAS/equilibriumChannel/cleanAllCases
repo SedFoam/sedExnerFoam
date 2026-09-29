@@ -1,0 +1,11 @@
+#!/bin/sh
+
+pathCases=$(echo "case1565 case1957 case1965 case2565")
+
+for path in $pathCases
+do
+    echo "\npath: " $path
+    cd $path
+    ./Allclean
+    cd ..
+done

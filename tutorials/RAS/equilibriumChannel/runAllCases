@@ -1,0 +1,12 @@
+#!/bin/sh
+
+pathCases=$(echo "case1565 case1957 case1965 case2565")
+
+for path in $pathCases
+do
+    echo "\npath: " $path
+    blockMesh -case $path
+    makeFaMesh -case $path
+    cp -r $path/0_org $path/0
+    sedExnerFoam -case $path > log
+done

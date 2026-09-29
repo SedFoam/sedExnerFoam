@@ -28,6 +28,6 @@ transportModel  Newtonian;
 
 nu              nu [ 0 2 -1 0 0 0 0 ] 1e-6;
 
-Sc      1.0; // Schmidt number
+Sc      1.1; // Schmidt number
 
 // ************************************************************************* //

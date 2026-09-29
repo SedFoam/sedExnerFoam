@@ -1,0 +1,37 @@
+﻿/**
+ * \file        governingEq.doc
+ * \author      Cyrille Bonamy, Eduard Puig Montellà and Julien Chauchat
+ * \date        Feb 05, 2026
+ * \brief       sedExnerFoam governing equations (doc)
+ */
+/*! \page governingEq Governing equations 
+
+The model was developed from the solver pimpleFoam. The hydrodynamics is solved using the PIMPLE algorithm for incompressible fluid. Some sediments are transported in suspension, they are advected by the fluid, settle under the influence of gravity and are mixed by turbulence. A erosion/deposition term controls the exchange between the suspended load and the sediment bed. The rest of the sediments are transported as bedload, they slide, roll and saltate on the bed. These different sediment fluxes lead to the morphological evolution described by the Exner equation and handled by the Arbitrary Lagrangian Eulerian approach. With this approach, the sediment bed act as a boundary of the computational domain. The mesh is dynamic and get distorted in time so that the bed boundary match the geometry changes.
+
+\section hydrodynamics Hydrodynamics:
+
+\f[
+\frac{\partial \mathbf{u}}{\partial t} + \nabla.(\mathbf{u}^T\mathbf{u}) = -\frac{1}{\rho_f}\nabla p + \mathbf{g} + \nabla.(2\nu \mathbf{S} + \mathbf{\tau_f})
+\f]
+
+\f[
+\nabla.\mathbf{u}=0
+\f]
+
+\section susp-load Suspended load transport:
+
+\anchor eq1 \f[
+\frac{\partial c_s}{\partial t} + \nabla.[(\mathbf{u}+\mathbf{w_s})c_s] = \nabla.(\epsilon_s \nabla c_s)
+\f]
+
+\section bedload Bedload transport and morphodynamics are described by the Exner equation:
+
+\anchor eq2 \f[
+(1-\lambda_s)\frac{\partial z_b}{\partial t} + \nabla.\mathbf{q_b}= D-E
+\f]
+
+The Exner equation is solved on a finite area mesh, which is a mesh made of finite polyhedral surfaces which can be curved in the 3D space.
+
+For more details, the interested reader is referred to <a href="https://doi.org/10.5194/egusphere-2025-2375">Renaud et al. (2026)</a> .
+
+*/

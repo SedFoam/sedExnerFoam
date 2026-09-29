@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Remove the mesh
-foamCleanPolyMesh
-
-# Remove time folders
-foamListTimes -rm -time 0: -withZero
-# remove log file
-rm log

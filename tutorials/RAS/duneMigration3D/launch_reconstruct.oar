@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#OAR -n reconstruct
+#OAR -l /nodes=1/core=1,walltime=24:00:00
+
+. /etc/profile
+module load openfoam/2506plus
+
+# Lancement
+reconstructPar -time 6: 

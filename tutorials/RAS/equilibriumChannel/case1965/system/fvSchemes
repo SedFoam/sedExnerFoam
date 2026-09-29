@@ -31,7 +31,7 @@ divSchemes
 // UEqn
     div(phi,U)    Gauss limitedLinearV 1;
 // CsEqn
-    div(phip,Cs)   Gauss upwind;
+    div(phip,Cs)   Gauss linear;
 // pEqn
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
 // k and EpsilonEqn

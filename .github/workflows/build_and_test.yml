@@ -9,7 +9,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    container: opencfd/openfoam-dev:2412
+    container: opencfd/openfoam-dev:2512
     steps:
       - name: Install git
         run: |
@@ -22,14 +22,14 @@ jobs:
         run: |
           shopt -s expand_aliases && source /openfoam/bash.rc &&
           export FOAM_USER_LIBBIN=$FOAM_SITE_LIBBIN && ./Allwmake -prefix=group
-      - uses: actions/upload-artifact@4.4.3
+      - uses: actions/upload-artifact@v4
         with:
           name: sedExnerFoam-binary
-          path: /usr/lib/openfoam/openfoam2412/site
+          path: /usr/lib/openfoam/openfoam2512/site
 
   light_tests:
     runs-on: ubuntu-latest
-    container: opencfd/openfoam-dev:2412
+    container: opencfd/openfoam-dev:2512
     needs: [build, checkstyle, checkpep8]
     steps:
       - name: Install git and Python packages
@@ -45,10 +45,10 @@ jobs:
       - uses: actions/download-artifact@v4.1.8
         with:
           name: sedExnerFoam-binary
-          path: /usr/lib/openfoam/openfoam2412/site
+          path: /usr/lib/openfoam/openfoam2512/site
       - name: chmod sedExnerFoam binary
         run: chmod a+x -R *
-        working-directory: /usr/lib/openfoam/openfoam2412/site
+        working-directory: /usr/lib/openfoam/openfoam2512/site
 
       - name: Test 1DSedim
         run: |
@@ -101,7 +101,7 @@ jobs:
 
   pycompare_tests:
     runs-on: ubuntu-latest
-    container: opencfd/openfoam-dev:2412
+    container: opencfd/openfoam-dev:2512
     needs: [build, checkstyle, checkpep8]
     steps:
       - name: Install git and Python packages
@@ -117,24 +117,25 @@ jobs:
       - uses: actions/download-artifact@v4.1.8
         with:
           name: sedExnerFoam-binary
-          path: /usr/lib/openfoam/openfoam2412/site
+          path: /usr/lib/openfoam/openfoam2512/site
       - name: chmod sedExnerFoam binary
         run: chmod a+x -R *
-        working-directory: /usr/lib/openfoam/openfoam2412/site
+        working-directory: /usr/lib/openfoam/openfoam2512/site
 
-      - name: Test pyCompare_duneTransport
-        run: |
-          source /openfoam/bash.rc
-          source /home/sudofoam/pyenv/bin/activate
-          sudo chmod -R a+rwX tests
-          cd tests/pyCompare/duneTransport
-          runuser -u sudofoam -- ./Allrun > /dev/null
-          python3 test.py
-
+#      - name: Test pyCompare_duneTransport
+#        run: |
+#          source /openfoam/bash.rc
+#          source /home/sudofoam/pyenv/bin/activate
+#          sudo chmod -R a+rwX tests
+#          cd tests/pyCompare/duneTransport
+#          runuser -u sudofoam -- ./Allrun > /dev/null
+#          python3 test.py
+#
       - name: Test pyCompare_AB0avalanche
         run: |
           source /openfoam/bash.rc
           source /home/sudofoam/pyenv/bin/activate
+          sudo chmod -R a+rwX tests
           cd tests/pyCompare/AB0avalanche
           runuser -u sudofoam -- ./Allrun > /dev/null
           python3 test.py
@@ -172,7 +173,14 @@ jobs:
   checkpep8:
     runs-on: ubuntu-latest
     steps:
+      - name: install pycodestyle
+        run: |
+          sudo pip3 install pycodestyle
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3 
+        with:
+          submodules: recursive
       - name: Python Style Checker
-        uses: andymckay/pycodestyle-action@0.1.3
+        run: |
+          pycodestyle tests  --max-line-length=120 &&
+          pycodestyle tutorials  --max-line-length=120

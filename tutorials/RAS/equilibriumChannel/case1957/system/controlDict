@@ -53,12 +53,10 @@ maxAlphaCo      1;
 
 maxDeltaT       1e0;
 
-libs (
-    "libWilcoxOmegaWallFunction.so"
-     "libOpenFOAM.so"
-     "libsimpleSwakFunctionObjects.so"
-     "libswakFunctionObjects.so"
-     );
+libs
+(
+    "libroughWallFunctions.so"
+);
 
 functions
 {

@@ -10,6 +10,6 @@ then
 fi
 
 src/Allwclean $*
-solver/Allwclean $*
+applications/Allwclean $*
 
 #------------------------------------------------------------------------------

@@ -27,7 +27,7 @@ echo
 #------------------------------------------------------------------------------
 
 src/Allwmake $targetType $*
-solver/Allwmake $targetType $*
+applications/Allwmake $targetType $*
 
 if [ -f wallFunctions/Allwmake ]
 then
