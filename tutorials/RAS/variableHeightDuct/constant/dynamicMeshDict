@@ -18,11 +18,14 @@ dynamicFvMesh      dynamicMotionSolverFvMesh;
 
 motionSolverLibs ("libfvMotionSolvers.so");
 
-solver            displacementLaplacian;
+solver            displacementComponentLaplacian;
 
-displacementLaplacianCoeffs
+displacementComponentLaplacianCoeffs
 {
-    diffusivity    inverseDistance (bed);
+    component     z;
+    diffusivity   quadratic inverseDistance (bed);
+    applyPointLocation false;
+
 }
 
 // ************************************************************************* //

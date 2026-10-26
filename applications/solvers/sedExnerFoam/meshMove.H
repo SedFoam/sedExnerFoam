@@ -20,11 +20,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-pointVectorField& pointDisplacement = const_cast<pointVectorField&>
+pointScalarField& pointDisplacement = const_cast<pointScalarField&>
 (
-    mesh.objectRegistry::lookupObject<pointVectorField>
+    mesh.objectRegistry::lookupObject<pointScalarField>
     (
-        "pointDisplacement"
+        "pointDisplacementz"
     )
 );
 
@@ -32,12 +32,25 @@ pointVectorField& pointDisplacement = const_cast<pointVectorField&>
 // displacement at the beginning of the time step (dispVals0, saved in
 // storeBedState.H) and the current dH. Starting from the current
 // pointDisplacement would add dH once per sub-iteration.
-vectorField& dispVals = dispValsPtr.ref();
+scalarField& dispVals = dispValsPtr.ref();
+scalarField& dHpoints = dHpointsPtr.ref();
+
+// Initialiser dispVals avec les déplacements initiaux (corrigés)
 dispVals = dispVals0;
 
-scalarField& dHpoints = dHpointsPtr.ref();
-dHpoints = Zero;
 
+// Forcer à zéro sur TOUS les points qui ne sont PAS des patches du lit
+forAll(pointDisplacement.boundaryField(), patchi)
+{
+    // Si ce n'est PAS un patch du lit, forcer à zéro
+    if (findIndex(bed.bedPatchesID(), patchi) == -1)
+    {
+        pointDisplacement.boundaryFieldRef()[patchi] = 0;
+    }
+}
+
+// Maintenant calculer le nouveau déplacement
+dHpoints = Zero;
 //interpolate bed level increment from face center to vertices
 bed.interpFaceToVertices(dH, dHpoints);
 
@@ -49,17 +62,17 @@ for (const label i : fixedPointsLabels)
     dHpoints[i] = 0.;
 }
 
-dispVals -= eg * dHpoints;
-
+dispVals += dHpoints;
 
 // interpolate displacement on points, vertical orientation
 //dispVals -= patchInterp.faceToPointInterpolate(dH) * eg;
 
+// Appliquer uniquement aux patches du lit
 for (const label patchID : bed.bedPatchesID())
 {
-    Info << "mesh vertices motion, max:" << gMax(dispVals & -eg);
-    Info << " m , min:" << gMin(dispVals & -eg);
-    Info << " m , mean:" << gAverage(-dispVals & eg) << " m" << endl;
+    Info << "mesh vertices motion, max:" << gMax(-dispVals);
+    Info << " m , min:" << gMin(-dispVals);
+    Info << " m , mean:" << gAverage(-dispVals) << " m" << endl;
     pointDisplacement.boundaryFieldRef()[patchID] == dispVals;
-    pointDisplacement.correctBoundaryConditions();
 }
+pointDisplacement.correctBoundaryConditions();

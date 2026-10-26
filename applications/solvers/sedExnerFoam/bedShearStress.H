@@ -75,62 +75,6 @@ for (const label patchID : bed.bedPatchesID())
     // remove bed normal component, tangential component only
     ssp += (ssp & (-Sfp / magSfp)) * (Sfp / magSfp);
 
-    if (filterShields)
-    {
-
-        // access to projected faMesh
-        const projectedFaMesh& meshProj = bed.aProjMesh();
-
-        // projected face centers coordinates
-        const vectorField& xFacesProj = meshProj.areaCentres();
-        // face owner list
-        const labelList& owner = meshProj.edgeOwner();
-        // face neighbour list
-        const labelList& neighbour = meshProj.edgeNeighbour();
-
-        const scalarField& SfProj = meshProj.S();
-        const vectorField& LeProj = meshProj.Le();
-
-        if (meshProj.nInternalEdges() > 0)
-        {
-
-            scalar dl = Foam::VGREAT;
-
-            for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
-            {
-                scalar newdl = Foam::mag(
-                xFacesProj[neighbour[edgei]] - xFacesProj[owner[edgei]]);
-
-                if (newdl < dl)
-                {
-                    dl = newdl;
-                }
-
-            }
-
-            scalar Kex = Foam::sqr(dl) * alphaShields;
-
-
-                ssp = filterField(
-                    NShields,
-                    Kex,
-                    ssp,
-                    meshProj,
-                    SfProj,
-                    xFacesProj,
-                    LeProj,
-                    owner,
-                    neighbour);
-
-        }
-
-        // remove bed normal component, tangential component only
-        ssp += (ssp & (-Sfp / magSfp)) * (Sfp / magSfp);
-    }
-
-    // print min/max of Shields number
-    Info << "Shields number: max:" << gMax(mag(ssp));
-    Info << " min:" << gMin(mag(ssp)) << endl;
 }
 
 // map volumic shields number to area shields number
@@ -139,3 +83,51 @@ shields.primitiveFieldRef() =
     (
         shieldsVf.boundaryFieldRef()
     );
+
+if (filterShields)
+{
+    const projectedFaMesh& meshProj = bed.aProjMesh();
+
+    if (projectedGlobalEdgeCount(meshProj) > 0)
+    {
+        const scalar dl = projectedMinEdgeDistance(meshProj);
+        const scalar Kex = Foam::sqr(dl) * alphaShields;
+
+        shields.primitiveFieldRef() = filterField
+        (
+            NShields,
+            Kex,
+            shields.primitiveField(),
+            meshProj,
+            meshProj.S(),
+            meshProj.areaCentres(),
+            meshProj.Le(),
+            meshProj.edgeOwner(),
+            meshProj.edgeNeighbour(),
+            shields
+        );
+    }
+
+    // Remove any bed-normal component introduced by the interpolation.
+    const vectorField& faceNormals =
+        bed.aMesh().faceAreaNormals().internalField();
+    forAll(shields, facei)
+    {
+        shields[facei] -= (shields[facei] & faceNormals[facei])
+            * faceNormals[facei];
+    }
+
+    shields.correctBoundaryConditions();
+    bed.vsm.ref().mapToVolume
+    (
+        shields,
+        shieldsVf.boundaryFieldRef()
+    );
+}
+
+for (const label patchID : bed.bedPatchesID())
+{
+    const vectorField& ssp = shieldsVf.boundaryField()[patchID];
+    Info << "Shields number: max:" << gMax(mag(ssp));
+    Info << " min:" << gMin(mag(ssp)) << endl;
+}

@@ -44,17 +44,26 @@ if (bed.exist())
 
     // bed points displacement at t: the displacement imposed at each
     // sub-iteration is dispVals0 - eg*dH, not cumulative
+//if (bed.bedMotion())
+//{
+//    const pointVectorField& pointDisplacement =
+//  mesh.objectRegistry::lookupObject<pointVectorField>("pointDisplacement");
+//
+//    // Sauvegarder TOUT le champ, pas juste le dernier patch
+//    dispVals0 = pointDisplacement.primitiveField();
+//}
+
     if (bed.bedMotion())
     {
-        const pointVectorField& pointDisplacement =
-            mesh.objectRegistry::lookupObject<pointVectorField>
+        const pointScalarField& pointDisplacement =
+            mesh.objectRegistry::lookupObject<pointScalarField>
             (
-                "pointDisplacement"
+                "pointDisplacementz"
             );
 
         for (const label patchID : bed.bedPatchesID())
         {
-            dispVals0 =
+            dispVals0 = //pointDisplacement.primitiveField();
                 pointDisplacement.boundaryField()[patchID].patchInternalField();
         }
     }

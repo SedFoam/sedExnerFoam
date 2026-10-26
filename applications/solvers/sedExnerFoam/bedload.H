@@ -60,6 +60,9 @@ qsat = bedloadMod.qb(
     shields, critShields, gradZb, rhoS, rhoF, mag(g), dS, nuF);
 
 qsat.correctBoundaryConditions();
+// Refresh coupled values before using qb as the state in the saturation
+// transport equation.
+qb.correctBoundaryConditions();
 
 // test 3D
 /*
@@ -77,6 +80,16 @@ if (saturationType == "implicit1D")
 {
     Info << "Implicit saturation" << endl;
 
+    if (Pstream::parRun())
+    {
+        FatalErrorInFunction
+            << "saturation type 'implicit1D' solves a dense system using "
+            << "only the local finite-area face ordering. It is not "
+            << "distributed across processor boundaries. Use 'explicit' "
+            << "or 'semiImplicit' for parallel runs."
+            << exit(FatalError);
+    }
+
     // access to projected faMesh
     const projectedFaMesh& meshProj = bed.aProjMesh();
     // projected face centers coordinates
@@ -87,6 +100,14 @@ if (saturationType == "implicit1D")
     const labelList& neighbour = meshProj.edgeNeighbour();
     label Nf = meshProj.nFaces();  // number of faces
     Info << "n faces = " << Nf << endl;
+
+    if (Nf < 2)
+    {
+        FatalErrorInFunction
+            << "saturation type 'implicit1D' requires at least two "
+            << "finite-area faces."
+            << exit(FatalError);
+    }
 
     scalarSquareMatrix Amat(meshProj.nFaces());
     Amat = Zero;
@@ -101,6 +122,15 @@ if (saturationType == "implicit1D")
             dl = newdl;
         }
     }
+
+    if (dl <= VSMALL)
+    {
+        FatalErrorInFunction
+            << "saturation type 'implicit1D' requires a non-zero "
+            << "internal-edge distance."
+            << exit(FatalError);
+    }
+
     scalar Mcoef = Lsat->value() / (2*dl);
     scalarField qsx(Nf);
 
@@ -198,32 +228,47 @@ else if (saturationType == "explicit")
     }
     qbProj += (deltaT / TsatCorr) * (qsatProj - qbProjOld);
 
-    /* test JC
-    // saturation equation, boundary edges contribution, BC
+    // Saturation transport across coupled edges. The same upwind edge value
+    // is used on both sides of a processor interface, giving equal and
+    // opposite contributions to the two local faces.
     forAll(bed.aMesh().boundary(), patchi)
     {
+        const faPatch& patch = bed.aMesh().boundary()[patchi];
+
+        if (not patch.coupled())
+        {
+            continue;
+        }
+
         const faPatchField<Vector<scalar>>& QbBound =
             qb.boundaryField()[patchi];
 
-        if (bed.aMesh().boundary()[patchi].type() != "empty")
+        label edgei = patch.start();
+        forAll(patch, patchEdgei)
         {
-            // faMesh edge adressing
-            label edgei = bed.aMesh().boundary()[patchi].start();
+            const label own = owner[edgei];
+            const vector qbOwner = qbProjOld[own];
+            const vector qbNeighbour = meshProj.project(QbBound[patchEdgei]);
 
-            forAll(bed.aMesh().boundary()[patchi], patchEdgei)
+            vector qbEdgei = 0.5*(qbOwner + qbNeighbour);
+            if ((qbEdgei & LeProj[edgei]) >= scalar(0))
             {
-                // linear interpolation from face to edge
-                vector qbEdgei = meshProj.project(QbBound[patchEdgei]);
-
-                vector divLsQb = (deltaT * Lsat->value() / TsatCorr)
-                    * (qbEdgei & LeProj[edgei])
-                    * (qbEdgei / (Foam::mag(qbEdgei) + SMALL));
-                qbProj[owner[edgei]] -= divLsQb / SfProj[owner[edgei]];
-                edgei++;
+                qbEdgei = qbOwner;
             }
+            else
+            {
+                qbEdgei = qbNeighbour;
+            }
+
+            const vector divLsQb = (deltaT * Lsat->value() / TsatCorr)
+                * (qbEdgei & LeProj[edgei])
+                * (qbEdgei / (Foam::mag(qbEdgei) + SMALL));
+
+            qbProj[own] -= divLsQb / SfProj[own];
+            edgei++;
         }
     }
-    */
+
     // normal to faMesh faces
     const vectorField& nFaces =
         bed.aMesh().faceAreaNormals().internalField();
@@ -314,27 +359,50 @@ else if (saturationType == "semiImplicit")
     qbProj += ((1/(1 + deltaT / Tsat->value())) - 1)
         * qbProjOld + (deltaT / (deltaT + Tsat->value())) * qsatProj;
 
-    // saturation equation, boundary edges contribution, BC
+    // Saturation equation on boundary edges. Coupled patches use the same
+    // upwind flux on both sides; physical patches keep their prescribed
+    // boundary value.
     forAll(bed.aMesh().boundary(), patchi)
     {
+        const faPatch& patch = bed.aMesh().boundary()[patchi];
         const faPatchField<Vector<scalar>>& QbBound =
             qb.boundaryField()[patchi];
 
-        if (bed.aMesh().boundary()[patchi].type() != "empty")
+        if (patch.type() != "empty")
         {
-            // faMesh edge adressing
-            label edgei = bed.aMesh().boundary()[patchi].start();
-            forAll(bed.aMesh().boundary()[patchi], patchEdgei)
+            label edgei = patch.start();
+            forAll(patch, patchEdgei)
             {
-                // linear interpolation from face to edge
+                const label own = owner[edgei];
+
+                const scalar localCFL = Lsat->value()/Tsat->value()*deltaT
+                    * Foam::mag(LeProj[edgei])/SfProj[own];
+                localMaxCFL = max(localMaxCFL, localCFL);
+
                 vector qbEdgei = meshProj.project(QbBound[patchEdgei]);
-                // Matthias vesrsion:
-                // vector divLsQb = (deltaT * Lsat->value() / Tsat->value())
-                vector divLsQb = (Lsat->value()*deltaT
+
+                if (patch.coupled())
+                {
+                    const vector qbOwner = qbProjOld[own];
+                    const vector qbNeighbour = qbEdgei;
+                    qbEdgei = 0.5*(qbOwner + qbNeighbour);
+
+                    if ((qbEdgei & LeProj[edgei]) >= scalar(0))
+                    {
+                        qbEdgei = qbOwner;
+                    }
+                    else
+                    {
+                        qbEdgei = qbNeighbour;
+                    }
+                }
+
+                const vector divLsQb = (Lsat->value()*deltaT
                     / (deltaT + Tsat->value()))
                     * (qbEdgei & LeProj[edgei])
                     * (qbEdgei / (Foam::mag(qbEdgei) + SMALL));
-                qbProj[owner[edgei]] -= divLsQb / SfProj[owner[edgei]];
+
+                qbProj[own] -= divLsQb / SfProj[own];
                 edgei++;
             }
         }
