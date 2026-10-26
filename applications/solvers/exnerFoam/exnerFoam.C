@@ -27,7 +27,8 @@ Application
     exnerFoam
 
 Description
-    Idealized Exner solver.
+    Idealized Exner solver. The Exner equation is solved on a horizontal
+    plane, perpendicular to gravity.
 
 \*---------------------------------------------------------------------------*/
 //    \heading Solver details
@@ -83,7 +84,7 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    Info<< "\nStarting time loop\n" << endl;
+    Info << "\nStarting time loop\n" << endl;
 
     while (runTime.run())
     {
@@ -94,40 +95,29 @@ int main(int argc, char *argv[])
         mesh.controlledUpdate();
 
         // zb match bed level
-        zb = - bed.aMesh().areaCentres() & eg;
+        zb = - aMesh.areaCentres() & eg;
+
+        dVsed.storeOldTimes();
+        forAll(bed.aMesh().areaCentres(), facei)
+        {
+            dVsed[facei] = 0;
+        }
 
         // compute bedload flux based on H - zb
         forAll(bed.aMesh().areaCentres(), facei)
         {
             vector ui = Q[facei] / (H[facei] - zb[facei]);
-            qb[facei] = alphaQb * Foam::pow(ui, betaQb-1) * ui;
+            vector ei = ui / Foam::mag(ui);
+            qb[facei] = alphaQb * Foam::pow(Foam::mag(ui), betaQb) * ei;
         }
-        //vectorField eu = U / mag(U);
-        //qb = alphaQb * Foam::pow(Q, betaQb) / Foam::pow(H-zb, betaQb);
 
         qb.correctBoundaryConditions();
 
-        // explicit resolution
-        faScalarMatrix exnerEqn
-        (
-            fam::ddt(dzb)
-            ==
-          - fac::div(qb)
-          //- fac::div(qav)
-        );
-
-        exnerEqn.solve();
-
-        #include "moveMesh.H"
+        #include "exnerEqn.H"
 
         if (runTime.writeTime())
         {
             // map areaFields to volFields for vizualisation
-            bed.vsm.ref().mapToVolume
-            (
-                qav,
-                qavVf.boundaryFieldRef()
-            );
             bed.vsm.ref().mapToVolume
             (
                 qb,
@@ -139,10 +129,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    Info<< "End\n" << endl;
+    Info << "End\n" << endl;
 
     return 0;
 }
-
 
 // ************************************************************************* //

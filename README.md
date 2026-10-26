@@ -1,15 +1,15 @@
 # SedExnerFoam
 
-SedExnerFoam is an OpenFOAM solver in development aiming at the numerical study of various sediment transport and morphodynamics problems.
+**SedExnerFoam** is an OpenFOAM solver in development aiming at the numerical study of various sediment transport and morphodynamics problems.
 
 
 ## Repository organization
 
 The repository is organized as follows:
-- **solver**, definition of the solver
-- **src**, various librairies needed by the solver (bedload model, settling model, etc.)
-- **tests**, cases to help identify bugs and missbehaviors of model 
-- **tutorials**, examples of sedExnerFoam applications. cases are categorized as RAS or laminar. A PY folder contains various python scripts and jupyter-notebook to post process simulations and compare results with experimental data contained in the DATA folder.
+- **applications**: source code of the solvers.
+- **src**: libraries required by the solver (bedload transport models, settling velocity models, morphodynamic utilities, etc.).
+- **tests**: simplified test cases used to identify bugs and verify model behaviour.
+- **tutorials**: example applications of `sedExnerFoam`. Tutorial cases are organized into **laminar**, **RAS** and idealized categories. The **PY** folder contains Python scripts and Jupyter notebooks for post-processing and comparison with the experimental datasets provided in the **DATA** folder.
 
 
 ## Installation
@@ -27,23 +27,45 @@ cd sedExnerFoam
 
 ## Model description
 
-The model was developed from the solver pimpleFoam. The hydrodynamics is solved using the *PIMPLE* algorithm for incompressible fluid. Some sediments are transported in suspension, they are advected by the fluid, settle under the influence of gravity and are mixed by turbulence. A erosion/deposition term controls the exchange between the suspended load and the sediment bed. The rest of the sediments are transported as bedload, they slide, roll and saltate on the bed. These different sediment fluxes lead to the morphological evolution described by the Exner equation and handled by the Arbitrary Lagrangian Eulerian approach. With this approach, the sediment bed act as a boundary of the computational domain. The mesh is dynamic and get distorted in time so that the bed boundary match the geometry changes.
+The solver is derived from **pimpleFoam** and uses the **PIMPLE** algorithm to solve the incompressible Navier-Stokes equations.
 
-- hydrodynamics:
+Sediment transport is represented through two complementary modes:
 
-$$ \frac{\partial \mathbf{u}}{\partial t} + \nabla.(\mathbf{u}^T\mathbf{u}) = -\frac{1}{\rho_f}\nabla p + \mathbf{g} + \nabla.(2\nu \mathbf{S} + \mathbf{\tau_f}) $$
+- Suspended load, in which sediment particles are advected by the flow, settle under gravity, and are mixed by turbulence.
+- Bedload transport, in which sediment particles move along the bed by rolling, sliding, and saltation.
 
-$$ \nabla.\mathbf{u}=0 $$
+An erosion/deposition formulation governs the exchange of sediment between the bed and the water column. The resulting sediment fluxes drive bed evolution through the **Exner** equation.
 
-- suspended load transport:
+Morphological changes are handled using an Arbitrary Lagrangian-Eulerian (ALE) approach. In this framework, the sediment bed is represented as a moving boundary of the computational domain. The mesh is continuously deformed so that the bed boundary follows the evolving bed topography.
 
-$$ \frac{\partial c_s}{\partial t} + \nabla.[(\mathbf{u}+\mathbf{w_s})c_s] = \nabla.(\epsilon_s \nabla c_s) $$
+### Hydrodynamics
 
-- bedload transport and morphodynamics are described by the Exner equation:
+The hydrodynamics are described by the filtered Navier-Stokes equations for a homogeneous incompressible fluid:
 
-$$ (1-\lambda_s)\frac{\partial z_b}{\partial t} + \nabla.\mathbf{q_b}= D-E $$
+$$ \frac{\partial u}{\partial t} + \nabla.(u \otimes u) = -\frac{1}{\rho_f}\nabla p + g + \nabla.(2\nu S + \tau_f) $$
 
-The Exner equation is solved on a finite area mesh, which is a mesh made of finite polyhedral surfaces which can be curved in the 3D space.
+$$ \nabla.u=0 $$
+
+where $u$ is the fluid velocity, $p$ the pressure, $\rho_f$ is the fluid density, $\nu$ is the fluid kinematic viscosity, $g$ the gravitational acceleration, and $\tau_f$ is the filtering stress tensor. Depending on the selected turbulence modelling approach, $\tau_f$ may represent either the Reynolds stress tensor in Reynolds-Averaged Navier-Stokes (RANS) simulations or the subgrid-scale stress tensor in Large-Eddy Simulations (LES).
+
+### suspended load transport:
+
+The suspended load is described by a transport equation for the sediment volume fraction, $c_s$:
+
+$$ \frac{\partial c_s}{\partial t} + \nabla.[(u+w_s)c_s] = \nabla.(\epsilon_s \nabla c_s) $$
+
+where $w_s$ is the settling velocity vector, computed using empirical settling laws with optional hindered-settling corrections, and $\epsilon_s$ is the sediment turbulent diffusivity.
+The exchange of sediment between the water column and the bed is represented through erosion and deposition fluxes applied as boundary conditions at the bed surface.
+
+### bedload transport and morphodynamics
+
+The bed elevation $z_b$, evolves in time under the influence of both bedload and suspended load transport:
+
+$$ (1-\lambda_s)\frac{\partial z_b}{\partial t} + \nabla.q_b= D-E $$
+
+where $\lambda_s$ is the granular material porosity, $q_b$ the bedload transport rate per unit width and $D$ and $E$ are the erosion and deposition per unit area, respectively.
+
+The Exner equation is solved on the horizontal projection of the sediment bed using the **finite-area method**. The resulting bed elevation changes are then transferred to the three-dimensional computational mesh through an **Arbitrary Lagrangian-Eulerian (ALE)** formulation. In this approach, the sediment bed forms a moving boundary of the computational domain and the mesh is continuously deformed to follow the evolving bed topography.
 
 
 ## Developers
@@ -52,6 +74,7 @@ The Exner equation is solved on a finite area mesh, which is a mesh made of fini
 - Cyrille Bonamy
 - Julien Chauchat
 - Olivier Bertrand
+- Arthur Lopez
 
 
 ## Acknowledgements

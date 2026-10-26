@@ -1,0 +1,109 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    Phi
+    {
+        solver          GAMG;
+        smoother        DIC;
+        tolerance       1e-06;
+        relTol          0.01;
+    }
+
+    cellDisplacement
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-5;
+        relTol          0.01;
+        //smoother        GaussSeidel;
+    }
+    cellDisplacementFinal
+    {
+        $cellDisplacement;
+        tolerance      1e-5;
+        relTol         0;
+    }
+    
+    p
+    {
+        solver          GAMG;
+        tolerance       1e-06;
+        relTol          0.0001;
+        maxIter         30;
+        smoother        DIC;
+        nPreSweeps      0;
+        nPostSweeps     2;
+        nFinestSweeps   2;
+        cacheAgglomeration true;
+        nCellsInCoarsestLevel 10;
+        agglomerator    faceAreaPair;
+        mergeLevels     1;
+    }
+
+    pFinal
+    {
+        $p;
+        tolerance       1e-6;
+        relTol          0;
+    }
+
+    pcorrFinal
+    {
+        $p;
+        tolerance       1e-6;
+        relTol          0;
+    }
+    
+    "(k|omega|Cs)"
+    {
+        solver          PBiCG;
+        preconditioner  DILU;
+        tolerance       1e-6;
+        relTol          0.001;
+    }
+
+    "(kFinal|omegaFinal)"
+    {
+        solver          PBiCG;
+        preconditioner  DILU;
+        tolerance       1e-9;
+        relTol          0;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor 0;
+    nOuterCorrectors  1;
+    nCorrectors     1;
+    nNonOrthogonalCorrectors 0;
+    correctAlpha    0;
+    nAlphaCorr      1;
+    pRefPoint       (-0.2 0.005 0.045);
+    pRefValue       0;
+}
+
+potentialFlow
+{
+    nNonOrthogonalCorrectors 3;
+    PhiRefPoint       (-0.2 0.005 0.045);
+    PhiRefValue       0;
+}
+
+// ************************************************************************* //
