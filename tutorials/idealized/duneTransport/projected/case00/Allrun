@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Create the vol and fa meshes
+blockMesh > log.blockMesh
+makeFaMesh > log.makeFaMesh
+
+# create the initial time folder
+cp -r 0_org 0
+
+# Run sedExnerFoam
+projExnerFoam > log.exnerFoam

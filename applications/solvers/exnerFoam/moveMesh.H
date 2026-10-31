@@ -34,12 +34,12 @@ for (const label patchID : bed.bedPatchesID())
         pointDisplacement.boundaryFieldRef()[patchID].patchInternalField();
 }
 
-dzbPoints = Zero;
+dHpoints = Zero;
 
 //interpolate bed level increment from face center to vertices
-bed.interpFaceToVertices(dzb, dzbPoints);
+bed.interpFaceToVertices(dH, dHpoints);
 
-dispVals -= eg * dzbPoints;
+dispVals -= eg * dHpoints;
 
 for (const label patchID : bed.bedPatchesID())
 {

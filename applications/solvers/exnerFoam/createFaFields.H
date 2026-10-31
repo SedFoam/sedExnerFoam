@@ -38,9 +38,15 @@ IOdictionary bedloadProperties
 Info << "Instantiate sedimentBed" << endl;
 sedimentBed bed(bedloadProperties, mesh, g);
 
+// Const refrence to finite area mesh
+const faMesh& aMesh = bed.aMesh();
+
+// Const reference to projected finite area mesh
+const projectedFaMesh& meshProj = bed.aProjMesh();
+
 // bed elevation increment on points
-vectorField dispVals(bed.aMesh().nPoints(), Zero);
-scalarField dzbPoints(bed.aMesh().nPoints(), Zero);
+vectorField dispVals(aMesh.nPoints(), Zero);
+scalarField dHpoints(aMesh.nPoints(), Zero);
 
 const dictionary bedloadModelDict = bedloadProperties.subDict("bedloadModel");
 
@@ -48,6 +54,16 @@ const dictionary bedloadModelDict = bedloadProperties.subDict("bedloadModel");
 //dimensionedScalar alphaQb("alpha", bedloadModelDict);
 scalar alphaQb(bedloadModelDict.get<scalar>("alpha"));
 scalar betaQb(bedloadModelDict.get<scalar>("beta"));
+Info << "bedload transport law, qb = alpha*U^beta,"
+    << "alpha = " << alphaQb << ", beta = " << betaQb << endl;
+
+// divergence scheme for qb, linear, upwind or linearUpwind
+word qbScheme(bedloadProperties.get<word>("qbScheme"));
+Info << "div(qb) scheme: " << qbScheme << endl;
+
+// Order of explicit Adams-Bashforth time scheme
+// default is 1, euler explicit, options are 1 and 2
+label ABorder(bedloadProperties.get<label>("ABorder"));
 
 // points displacements values for mesh motion
 autoPtr<vectorField> dispValsPtr;
@@ -66,17 +82,19 @@ if (betaRepDeg <= 0 or betaRepDeg >= 90)
     Info << abort(FatalError) << endl;
 }
 
+scalarField zb(aMesh.nFaces(), Zero);
+
 areaVectorField Q
 (
     IOobject
     (
         "Q",
         runTime.timeName(),
-        bed.aMesh(),
+        aMesh,
         IOobject::MUST_READ,
         IOobject::NO_WRITE
     ),
-    bed.aMesh()
+    aMesh
 );
 
 areaScalarField H
@@ -85,39 +103,11 @@ areaScalarField H
     (
         "H",
         runTime.timeName(),
-        bed.aMesh(),
+        aMesh,
         IOobject::MUST_READ,
         IOobject::NO_WRITE
     ),
-    bed.aMesh()
-);
-
-areaScalarField zb
-(
-    IOobject
-    (
-        "zb",
-        runTime.timeName(),
-        bed.aMesh(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
-    ),
-    bed.aMesh(),
-    dimensionedScalar(dimLength, Zero)
-);
-
-areaScalarField dzb
-(
-    IOobject
-    (
-        "dzb",
-        runTime.timeName(),
-        bed.aMesh(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
-    ),
-    bed.aMesh(),
-    dimensionedScalar(dimLength, Zero)
+    aMesh
 );
 
 areaVectorField gradZb
@@ -126,11 +116,11 @@ areaVectorField gradZb
     (
         "gradZb",
         runTime.timeName(),
-        bed.aMesh(),
+        aMesh,
         IOobject::NO_READ,
         IOobject::NO_WRITE
     ),
-    bed.aMesh(),
+    aMesh,
     dimensionedVector(dimless, Zero)
 );
 
@@ -140,12 +130,26 @@ areaScalarField beta
     (
         "beta",
         runTime.timeName(),
-        bed.aMesh(),
+        aMesh,
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
     ),
-    bed.aMesh(),
+    aMesh,
     dimensionedScalar(dimless, Zero)
+);
+
+areaScalarField dVsed
+(
+    IOobject
+    (
+        "dVsed",
+        runTime.timeName(),
+        aMesh,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE
+    ),
+    aMesh,
+    dimensionedScalar(dimensionSet(0, 3, -1, 0, 0, 0, 0), Zero)
 );
 
 areaVectorField qb
@@ -154,52 +158,16 @@ areaVectorField qb
     (
         "qb",
         runTime.timeName(),
-        bed.aMesh(),
+        aMesh,
         IOobject::MUST_READ,
         IOobject::AUTO_WRITE
     ),
-    bed.aMesh()
+    aMesh
 );
 
-edgeScalarField phiqb
-(
-    IOobject
-    (
-        "phiqb",
-        runTime.timeName(),
-        bed.aMesh(),
-        IOobject::READ_IF_PRESENT,
-        IOobject::AUTO_WRITE
-    ),
-    fac::interpolate(qb) & bed.aMesh().Le()
-);
+scalarField phiqbProj(aMesh.nEdges(), 0);
 
-areaVectorField qav
-(
-    IOobject
-    (
-        "qav",
-        runTime.timeName(),
-        bed.aMesh(),
-        IOobject::NO_READ,
-        IOobject::AUTO_WRITE
-    ),
-    bed.aMesh(),
-    dimensionedVector(dimensionSet(0, 2, -1, 0, 0, 0, 0), Zero)
-);
-
-edgeScalarField phiqav
-(
-    IOobject
-    (
-        "phiqav",
-        runTime.timeName(),
-        bed.aMesh(),
-        IOobject::READ_IF_PRESENT,
-        IOobject::AUTO_WRITE
-    ),
-    fac::interpolate(qav) & bed.aMesh().Le()
-);
+tensorField gradQbProj(aMesh.nFaces(), Zero);
 
 areaScalarField dH
 (
@@ -207,10 +175,10 @@ areaScalarField dH
     (
         "deltaH",
         runTime.timeName(),
-        bed.aMesh(),
-        IOobject::MUST_READ,
+        aMesh,
+        IOobject::NO_READ,
         IOobject::NO_WRITE
     ),
-    bed.aMesh(),
+    aMesh,
     dimensionedScalar(dimLength, Zero)
 );
