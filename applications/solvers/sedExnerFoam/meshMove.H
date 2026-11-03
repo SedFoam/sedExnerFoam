@@ -78,7 +78,7 @@ else
     forAll(pointDisp.boundaryField(), patchi)
     {
         // force to 0 if patch is not a bedPatch
-        if (!bed.bedPatchesID().found(patchi))
+        if (not bed.bedPatchesID().found(patchi))
         {
             pointDisp.boundaryFieldRef()[patchi] == vector(0, 0, 0);
         }
