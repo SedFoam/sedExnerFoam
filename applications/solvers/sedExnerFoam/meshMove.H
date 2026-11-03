@@ -42,7 +42,7 @@ Description
 scalarField& dispVals = dispValsPtr.ref();
 scalarField& dHpoints = dHpointsPtr.ref();
 
-// Initialiser dispVals avec les déplacements initiaux (corrigés)
+// Initiate dispVals with initialdisplacements
 dispVals = dispVals0;
 
 // -------------------------------------------------------------------
@@ -55,7 +55,7 @@ dispVals = dispVals0;
 const bool componentLaplacian =
     mesh.foundObject<pointScalarField>("pointDisplacementz");
 
-// Forcer à zéro sur TOUS les patches qui ne sont PAS des patches du lit
+// Force to zero for all patches not cooresponding to sediment bed
 if (componentLaplacian)
 {
     pointScalarField& pointDispz =
@@ -63,8 +63,8 @@ if (componentLaplacian)
 
     forAll(pointDispz.boundaryField(), patchi)
     {
-        // Si ce n'est PAS un patch du lit, forcer à zéro
-        if (findIndex(bed.bedPatchesID(), patchi) == -1)
+        // force to 0 if patch is not a bedPatch
+        if (not bed.bedPatchesID().found(patchi))
         {
             pointDispz.boundaryFieldRef()[patchi] == scalar(0);
         }
@@ -77,8 +77,8 @@ else
 
     forAll(pointDisp.boundaryField(), patchi)
     {
-        // Si ce n'est PAS un patch du lit, forcer à zéro
-        if (findIndex(bed.bedPatchesID(), patchi) == -1)
+        // force to 0 if patch is not a bedPatch
+        if (!bed.bedPatchesID().found(patchi))
         {
             pointDisp.boundaryFieldRef()[patchi] == vector(0, 0, 0);
         }

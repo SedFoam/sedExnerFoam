@@ -5,7 +5,7 @@ Copyright (C) 2022 Matthias Renaud, Cyrille Bonamy, Julien Chauchat
 License
     This file is part of ScourFOAM.
 
-    ScourFOAM is free software: you can redistribute it and/or modify it
+    SedExnerFoam is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -270,8 +270,8 @@ else if (saturationType == "explicit")
     }
 
     // normal to faMesh faces
-    const vectorField& nFaces =
-        bed.aMesh().faceAreaNormals().internalField();
+    // const vectorField& nFaces =
+    //     bed.aMesh().faceAreaNormals().internalField();
 
     // reconstruct qb from qbProj on bed surface
     forAll(meshProj.S(), facei)
@@ -409,8 +409,8 @@ else if (saturationType == "semiImplicit")
     }
 
     // normal to faMesh faces
-    const vectorField& nFaces =
-        bed.aMesh().faceAreaNormals().internalField();
+    // const vectorField& nFaces =
+    //     bed.aMesh().faceAreaNormals().internalField();
 
     // reconstruct qb from qbProj on bed surface
     forAll(meshProj.S(), facei)
