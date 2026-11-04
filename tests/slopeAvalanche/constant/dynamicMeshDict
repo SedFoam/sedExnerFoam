@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -21,8 +21,10 @@ motionSolverLibs ("libfvMotionSolvers.so");
 solver            displacementLaplacian;
 
 displacementLaplacianCoeffs
-{
-    diffusivity     quadratic inverseDistance (bed);
+{ 
+    diffusivity   quadratic inverseDistance (bed);
+    applyPointLocation false;
+
 }
 
 // ************************************************************************* //

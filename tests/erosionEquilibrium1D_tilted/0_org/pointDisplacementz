@@ -2,47 +2,49 @@
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
 |  \\    /   O peration     | Version:  v2406                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
     format      ascii;
-    class       pointVectorField;
-    object      pointDisplacement;
+    class       pointScalarField;
+    object      pointDisplacementz;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dimensions      [0 1 0 0 0 0 0];
 
-internalField   uniform (0 0 0);
+internalField   uniform 0;
 
 boundaryField
 {
     inlet
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type            cyclic;
     }
+    
     outlet
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type             cyclic;
     }
+
     top
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type             fixedValue;
+        value            uniform 0;
     }
+    
     bed
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type             fixedValue;
+        value            uniform 0;
     }
-    sides
+
+    frontAndBackPlanes
     {
-        type            zeroGradient;
+        type             empty;
     }
 }
 

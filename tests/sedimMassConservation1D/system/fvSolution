@@ -17,16 +17,16 @@ FoamFile
 
 solvers
 {
-    cellDisplacement
+    cellDisplacementz
     {
         solver          GAMG;
         tolerance       1e-5;
         relTol          0;
         smoother        GaussSeidel;
     }
-    cellDisplacementFinal
+    cellDisplacementzFinal
     {
-        $cellDisplacement;
+        $cellDisplacementz;
         tolerance      1e-6;
         relTol         0;
     }

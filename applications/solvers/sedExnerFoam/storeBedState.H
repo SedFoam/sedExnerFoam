@@ -44,18 +44,49 @@ if (bed.exist())
 
     // bed points displacement at t: the displacement imposed at each
     // sub-iteration is dispVals0 - eg*dH, not cumulative
+
     if (bed.bedMotion())
     {
-        const pointVectorField& pointDisplacement =
-            mesh.objectRegistry::lookupObject<pointVectorField>
-            (
-                "pointDisplacement"
-            );
-
-        for (const label patchID : bed.bedPatchesID())
+        // Displacement is stored as its vertical (z) component, whatever
+        // the mesh motion solver: displacementComponentLaplacian exposes
+        // a pointScalarField ("pointDisplacementz"), displacementLaplacian
+        // a pointVectorField ("pointDisplacement") from which only the
+        // vertical component is kept.
+        if (mesh.foundObject<pointScalarField>("pointDisplacementz"))
         {
-            dispVals0 =
-                pointDisplacement.boundaryField()[patchID].patchInternalField();
+            // displacementComponentLaplacian
+            const pointScalarField& pointDispz =
+                mesh.lookupObject<pointScalarField>("pointDisplacementz");
+
+            for (const label patchID : bed.bedPatchesID())
+            {
+                dispVals0 =
+                    pointDispz.boundaryField()[patchID].patchInternalField();
+            }
+        }
+        else if (mesh.foundObject<pointVectorField>("pointDisplacement"))
+        {
+            // displacementLaplacian
+            const pointVectorField& pointDisp =
+                mesh.lookupObject<pointVectorField>("pointDisplacement");
+
+            for (const label patchID : bed.bedPatchesID())
+            {
+                // keep only the vertical component
+                dispVals0 =
+                   -(
+                        pointDisp.boundaryField()[patchID].patchInternalField()
+                      & eg
+                    );
+            }
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "No mesh motion displacement field found: expected "
+                << "'pointDisplacementz' (displacementComponentLaplacian) "
+                << "or 'pointDisplacement' (displacementLaplacian)."
+                << exit(FatalError);
         }
     }
 }

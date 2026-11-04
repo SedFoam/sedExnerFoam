@@ -23,6 +23,7 @@ solver            displacementLaplacian;
 displacementLaplacianCoeffs
 {
     diffusivity     uniform 1;
+    applyPointLocation false;
 }
 
 // ************************************************************************* //

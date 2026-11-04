@@ -74,26 +74,29 @@ else if (ABorder==1)
 
 if (filterExner)
 {
-
-    if (meshProj.nInternalEdges() > 0)
+    if (projectedGlobalEdgeCount(meshProj) > 0)
     {
-
-        scalar dl = Foam::VGREAT;
-
-        for (label edgei = 0; edgei < meshProj.nInternalEdges(); edgei++)
-        {
-            scalar newdl = Foam::mag(
-                xFacesProj[neighbour[edgei]] - xFacesProj[owner[edgei]]);
-
-            if (newdl < dl)
-            {
-                dl = newdl;
-            }
-        }
+        const scalar dl = projectedMinEdgeDistance(meshProj);
 
         scalar Kex = Foam::sqr(dl) * alphaExn;
 
-        if (filterExnerType == "dZDiffusive")
+        if (filterExnerType == "implicitBiharmonic")
+        {
+            dH.primitiveFieldRef() = implicitBiharmonicFilter
+            (
+                dH.primitiveField(),
+                alphaExn,
+                dl,
+                meshProj,
+                SfProj,
+                xFacesProj,
+                LeProj,
+                owner,
+                neighbour,
+                dH
+            );
+        }
+        else if (filterExnerType == "dZDiffusive")
         {
 
             dH.primitiveFieldRef() =
@@ -106,7 +109,8 @@ if (filterExner)
                 xFacesProj,
                 LeProj,
                 owner,
-                neighbour);
+                neighbour,
+                dH);
         }
         else if (filterExnerType == "JohnsonZyserman")
         {
@@ -123,7 +127,8 @@ if (filterExner)
                 xFacesProj,
                 LeProj,
                 owner,
-                neighbour);
+                neighbour,
+                dH);
 
             scalarField dz = zB - zBsm;
 
@@ -137,7 +142,8 @@ if (filterExner)
                 xFacesProj,
                 LeProj,
                 owner,
-                neighbour) - dz;
+                neighbour,
+                dH) - dz;
         }
     }
 }
